@@ -20,6 +20,7 @@
     })
 
     function summary_success(data) {
+      console.log(data)
       data.forEach(row => {
         $('#summary-table tr:last').after(`<tr><td>${row.month}</td><td>${row.total}</td></tr>`);
       })
