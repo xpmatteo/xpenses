@@ -9,6 +9,7 @@ class SmokeTest < Minitest::Test
     $env = 'test'
     ENV['XPENSES_ENV'] = $env
     sh "aws dynamodb delete-table --table-name #$env.movements > /dev/null"
+    sh 'script/provision.sh'
     sh 'script/deploy.sh'
     sh 'script/upload.sh test-data/isp-movements-short.xls'
   end

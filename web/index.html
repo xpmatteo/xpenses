@@ -9,8 +9,17 @@
 
     <table id='summary-table'>
       <tr><th>Month</th><th>Total</th></tr>
-      <tr><td>foo</td><td>bar</td></tr>
     </table>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script>
+    var summary = [
+      { month: '2016-09', total: '750.53'},
+    ]
+    summary.forEach(row => {
+      $('#summary-table tr:last').after(`<tr><td>${row.month}</td><td>${row.total}</td></tr>`);
+    })
+    </script>
   </body>
 </html>
 
