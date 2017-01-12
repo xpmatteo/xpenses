@@ -10,4 +10,4 @@ fi
 
 curl \
   -F "movements=@$1" \
-  "http://$XPENSES_ENV.xpenses.it.s3-website.eu-central-1.amazonaws.com/api/movements"
+  "http://35.157.46.92/api/movements"

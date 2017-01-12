@@ -8,6 +8,7 @@ cd "$(dirname $0)/.."
 env='test'
 
 if ! aws dynamodb list-tables | grep -q $env.movements; then
+  echo "Creating $env.movements"
   aws dynamodb create-table \
     --table-name $env.movements \
     --attribute-definitions \

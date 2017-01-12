@@ -8,10 +8,10 @@ class SmokeTest < Minitest::Test
   def setup
     $env = 'test'
     ENV['XPENSES_ENV'] = $env
-    # system "aws dynamodb delete-table --table-name #$env.movements > /dev/null"
-    # sh 'script/provision.sh'
+    system "aws dynamodb delete-table --table-name #$env.movements > /dev/null"
+    sh 'script/provision.sh'
     # sh 'script/deploy.sh'
-    # sh 'script/upload.sh test-data/isp-movements-short.xls'
+    sh 'script/upload.sh test-data/isp-movements-short.xls'
   end
 
   # See here for Capybara docs
