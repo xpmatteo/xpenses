@@ -50,6 +50,7 @@ def delete_instances env
       when 48  # terminated
         puts "#{i} is already terminated"
       else
+        puts "terminating #{i}"
         i.terminate
       end
     end
@@ -59,7 +60,8 @@ end
 class CreateEnvironmentTest < Minitest::Test
 
   def setup
-    @instance = create_instance "xpenses_host", "test", {
+    @name = "test_instance_#{rand(10000)}"
+    @instance = create_instance @name, "test", {
       image_id: "ami-211ada4e",
       key_name: $key_name,
       instance_type: "t2.micro"
@@ -71,10 +73,13 @@ class CreateEnvironmentTest < Minitest::Test
   end
 
   def test_create_instance
-    found_instance = find_instance "xpenses_host", "test"
-    assert_equal "ami-211ada4e", found_instance.image_id
-    assert_match /abc/, found_instance.public_ip_address
-    assert_match /35\.\d{1-3}\.\d{1-3}\.\d{1-3}/, found_instance.public_ip_address
+    i = find_instance @name, "test"
+    p i.state.name
+    assert_equal "ami-211ada4e", i.image_id
+    assert_equal "t2.micro", i.instance_type
+    assert_equal $key_name, i.key_name
+    assert_match /172\.\d{1,3}\.\d{1,3}\.\d{1,3}/, i.private_ip_address
+    assert_match /35\.\d{1,3}\.\d{1,3}\.\d{1,3}/, i.public_ip_address
   end
 
   def xtest_instance_already_existing
