@@ -1,33 +1,3 @@
-resource "aws_s3_bucket" "config_bucket" {
-    bucket = "mv-free-terraform-experiment-state"
-    acl = "public-read"
-
-    cors_rule {
-        allowed_headers = ["*"]
-        allowed_methods = ["PUT","POST"]
-        allowed_origins = ["*"]
-        expose_headers = ["ETag"]
-        max_age_seconds = 3000
-    }
-
-    policy = <<EOF
-{
-    "Version": "2008-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadForGetBucketObjects",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "*"
-            },
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::mv-free-terraform-experiment-state/*"
-        }
-    ]
-}
-EOF
-}
-
 resource "aws_vpc" "workshop_vpc" {
     cidr_block = "10.0.0.0/24"
 }
@@ -44,21 +14,6 @@ resource "aws_subnet" "public_subnet_2" {
     cidr_block = "10.0.0.64/26"
 }
 
-resource "aws_instance" "bastion" {
-    ami = "ami-211ada4e"
-    subnet_id = "${aws_subnet.public_subnet_1.id}"
-    associate_public_ip_address = true
-    key_name = "matteo-free"
-    instance_type = "t2.micro"
-    tags {
-        Name = "Bastion"
-    }
-    vpc_security_group_ids = ["${aws_security_group.bastion_sg.id}"]
-}
-
-output "bastion.public_ip" {
-    value = "${aws_instance.bastion.public_ip}"
-}
 
 resource "aws_internet_gateway" "workshop_gw" {
     vpc_id = "${aws_vpc.workshop_vpc.id}"
@@ -82,30 +37,6 @@ resource "aws_route_table_association" "route_subnet_2" {
     route_table_id = "${aws_route_table.workshop_route_table.id}"
 }
 
-resource "aws_security_group" "bastion_sg" {
-    vpc_id = "${aws_vpc.workshop_vpc.id}"
-
-    ingress {
-        from_port = 8
-        to_port = 0
-        protocol = "icmp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-         from_port = 22
-         to_port = 22
-         protocol = "tcp"
-         cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-}
 
 resource "aws_security_group" "alb_sg" {
     vpc_id = "${aws_vpc.workshop_vpc.id}"
@@ -192,9 +123,8 @@ resource "aws_launch_configuration" "workshop_launch_conf" {
     }
     user_data = <<EOF
 #!/usr/bin/env bash
-yum update -y
-yum install -y httpd24
-service httpd start
+aws s3 cp s3://mv-free-terraform-workshop/provision.sh /root/
+bash /root/provision.sh
 EOF
 }
 
@@ -208,4 +138,71 @@ resource "aws_autoscaling_group" "workshop_autoscale" {
     launch_configuration = "${aws_launch_configuration.workshop_launch_conf.id}"
     target_group_arns = ["${aws_alb_target_group.workshop_alb.arn}"]
     enabled_metrics = ["GroupInServiceInstances"]
+}
+
+resource "aws_sns_topic" "workshop_alerts" {
+    name = "workshop-alerts-topic-matteo"
+}
+
+output "sns.arn" {
+    value = "${aws_sns_topic.workshop_alerts.arn}"
+}
+
+resource "aws_cloudwatch_metric_alarm" "dead_server" {
+    alarm_name = "Less than two healthy hosts in my cluster [name]!"
+    comparison_operator = "LessThanThreshold"
+    evaluation_periods = "1"
+    metric_name = "HealthyHostCount"
+    namespace = "AWS/ApplicationELB"
+    period = "60"
+    statistic = "Minimum"
+    threshold = "2"
+    dimensions {
+        LoadBalancer =
+            "${aws_alb.workshop_alb.arn_suffix}"
+        TargetGroup =
+            "${aws_alb_target_group.workshop_alb.arn_suffix}"
+    }
+    alarm_actions = ["${aws_sns_topic.workshop_alerts.arn}"]
+    ok_actions = ["${aws_sns_topic.workshop_alerts.arn}"]
+}
+
+resource "aws_iam_instance_profile" "workshop_profile" {
+    name = "workshop_profile_matteo"
+    roles = ["${aws_iam_role.ec2_role.name}"]
+}
+
+resource "aws_iam_role" "ec2_role" {
+    name = "ec2_role_matteo"
+    assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": { "Service": "ec2.amazonaws.com" },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "s3_bucket_policy" {
+    name = "s3_deploy_bucket_policy_matteo"
+    role = "${aws_iam_role.ec2_role.id}"
+    policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [ "s3:Get*", "s3:List*" ],
+      "Resource": [ "arn:aws:s3:::mv-free-terraform-workshop",
+                    "arn:aws:s3:::mv-free-terraform-workshop/*" ]
+    }
+  ]
+}
+EOF
 }
