@@ -2,7 +2,6 @@ require 'minitest/autorun'
 
 require 'aws-sdk'
 require 'ostruct'
-require 'net/ping'
 
 # see docs here: http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Instance.html
 
@@ -40,6 +39,16 @@ def find_instance name, env
   end
 end
 
+def find_instances name, env
+  ec2 = Aws::EC2::Resource.new(region: $region)
+
+  instances= ec2.instances({filters: [
+    {name: 'tag:Name', values: [name]},
+    {name: 'tag:Env', values: [env]},
+  ]})
+  return instances
+end
+
 def delete_instances env
   ec2 = Aws::EC2::Resource.new(region: $region)
 
@@ -59,21 +68,29 @@ def delete_instances env
   end
 end
 
+require 'net/ping'
+require 'net/ssh'
+require 'minitest/hooks/test'
 
 class CreateInstanceTest < Minitest::Test
-  @@name = "test_instance_#{rand(10000)}"
-  @@instance = create_instance @@name, "test", {
-    image_id: "ami-211ada4e",
-    key_name: $key_name,
-    instance_type: "t2.micro"
-  }
+  include Minitest::Hooks
 
-  def after_tests
+  def before_all
+    @name = "test_instance_#{rand(10000)}"
+    @instance = create_instance @name, "test", {
+      image_id: "ami-211ada4e",
+      key_name: $key_name,
+      instance_type: "t2.micro"
+    }
+  end
+
+  def after_all
     delete_instances "test"
   end
 
   def test_create_instance
-    i = find_instance @@name, "test"
+    puts "looking for instance #{@name}"
+    i = find_instance @name, "test"
     assert_equal "ami-211ada4e", i.image_id
     assert_equal "t2.micro", i.instance_type
     assert_equal $key_name, i.key_name
@@ -81,16 +98,39 @@ class CreateInstanceTest < Minitest::Test
     assert_match /35\.\d{1,3}\.\d{1,3}\.\d{1,3}/, i.public_ip_address
   end
 
-  def xtest_instance_already_existing
-    @@instance = create_instance @@name, "test", {
+  def test_instance_already_existing
+    create_instance @name, "test", {
       image_id: "ami-211ada4e",
       key_name: $key_name,
       instance_type: "t2.micro"
     }
-    assert_equal 1, find_running_instances(@@name, "test")
+    assert_equal 1, find_instances(@name, "test").count
   end
 
-  def xtest_can_ssh_to_instance
-
+  def test_can_ping_instance
+    i = find_instance @name, "test"
+    puts "Pinging #{i.public_ip_address}"
+    assert pingable?(i.public_ip_address), "pingable"
   end
+
+  def xtest_can_ssh_instance
+    i = find_instance @name, "test"
+    puts "Pinging #{i.public_ip_address}"
+    assert sshable?(i.public_ip_address), "pingable"
+  end
+
+  private
+
+  def pingable?(host)
+      check = Net::Ping::External.new(host)
+      check.ping?
+  end
+
+  def sshable? host
+    puts "SSHing #{host} ..."
+    Net::SSH.start(host.to_s, 'ec2-user', :password => 'badpassword' ) do |ssh|
+      p ssh
+    end
+  end
+
 end

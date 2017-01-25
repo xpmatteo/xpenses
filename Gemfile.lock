@@ -28,6 +28,9 @@ GEM
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0521)
     mini_portile2 (2.1.0)
+    minitest-hooks (1.4.0)
+    net-ping (2.0.1)
+    net-ssh (4.0.1)
     nokogiri (1.7.0.1)
       mini_portile2 (~> 2.1.0)
     pry (0.10.4)
@@ -64,6 +67,9 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk
   capybara
+  minitest-hooks
+  net-ping
+  net-ssh
   pry
   roo-xls
   selenium-webdriver
