@@ -1,3 +1,4 @@
+/*
 resource "aws_vpc" "workshop_vpc" {
     cidr_block = "10.0.0.0/24"
 }
@@ -206,3 +207,5 @@ resource "aws_iam_role_policy" "s3_bucket_policy" {
 }
 EOF
 }
+
+*/
