@@ -5,7 +5,7 @@ cd "$(dirname $0)/.."
 
 . script/lib/common.sh
 
-[ $# = 2 ] || {
+[ $# = 1 ] || {
   echo "Usage: $0 <environment>"
   exit 1
 }
