@@ -9,6 +9,8 @@ $region = 'eu-central-1'
 $key_name = 'matteo-free'
 
 def create_instance name, env, params
+  return if find_instance name, env
+
   ec2 = Aws::EC2::Resource.new(region: $region)
   defaults = {
     min_count: 1,
@@ -33,7 +35,7 @@ def find_instance name, env
     {name: 'tag:Env', values: [env]},
   ]})
   if instances.count == 0
-    raise "No instances found with name '#{name}' in env '#{env}'"
+    nil
   else
     return instances.first
   end
