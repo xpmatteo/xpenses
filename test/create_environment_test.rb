@@ -15,13 +15,14 @@ def create_instance name, env, params
     max_count: 1,
   }
 
-  instance = ec2.create_instances(defaults.merge(params))
-  instance.first.wait_until_running
-  instance.first.create_tags({ tags: [
+  instances = ec2.create_instances(defaults.merge(params))
+  instance = instances.first
+  instance.wait_until_running
+  instance.create_tags({ tags: [
     { key: 'Name', value: name },
     { key: 'Env', value: env },
   ]})
-  return instance.first
+  return instance
 end
 
 def find_instance name, env
@@ -83,6 +84,10 @@ class CreateEnvironmentTest < Minitest::Test
   end
 
   def xtest_instance_already_existing
+
+  end
+
+  def xtest_can_ssh_to_instance
 
   end
 end
