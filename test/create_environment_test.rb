@@ -2,6 +2,7 @@ require 'minitest/autorun'
 
 require 'aws-sdk'
 require 'ostruct'
+require 'net/ping'
 
 # see docs here: http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Instance.html
 
@@ -58,24 +59,21 @@ def delete_instances env
   end
 end
 
-class CreateEnvironmentTest < Minitest::Test
 
-  def setup
-    @name = "test_instance_#{rand(10000)}"
-    @instance = create_instance @name, "test", {
-      image_id: "ami-211ada4e",
-      key_name: $key_name,
-      instance_type: "t2.micro"
-    }
-  end
+class CreateInstanceTest < Minitest::Test
+  @@name = "test_instance_#{rand(10000)}"
+  @@instance = create_instance @@name, "test", {
+    image_id: "ami-211ada4e",
+    key_name: $key_name,
+    instance_type: "t2.micro"
+  }
 
-  def teardown
+  def after_tests
     delete_instances "test"
   end
 
   def test_create_instance
-    i = find_instance @name, "test"
-    p i.state.name
+    i = find_instance @@name, "test"
     assert_equal "ami-211ada4e", i.image_id
     assert_equal "t2.micro", i.instance_type
     assert_equal $key_name, i.key_name
@@ -84,7 +82,12 @@ class CreateEnvironmentTest < Minitest::Test
   end
 
   def xtest_instance_already_existing
-
+    @@instance = create_instance @@name, "test", {
+      image_id: "ami-211ada4e",
+      key_name: $key_name,
+      instance_type: "t2.micro"
+    }
+    assert_equal 1, find_running_instances(@@name, "test")
   end
 
   def xtest_can_ssh_to_instance
