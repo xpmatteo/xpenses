@@ -1,6 +1,6 @@
 
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.project_name}.${var.environment}.tfstate"
+  bucket = "${var.project_name}.tfstate"
   acl = "private"
   versioning {
     enabled = true
@@ -10,10 +10,11 @@ resource "aws_s3_bucket" "state_bucket" {
   }
 }
 
-output "state_bucket_id" {
-  value = "${aws_s3_bucket.state_bucket.id}"
-}
-
-output "state_bucket_arn" {
-  value = "${aws_s3_bucket.state_bucket.arn}"
+data "terraform_remote_state" "master_state" {
+  backend = "s3"
+  config {
+    bucket = "${var.project_name}.tfstate"
+    region = "${var.aws_region}"
+    key = "network/${var.environment}/terraform.tfstate"
+  }
 }
