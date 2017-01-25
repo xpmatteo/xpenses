@@ -5,6 +5,8 @@ resource "aws_instance" "xpenses_host" {
     instance_type = "t2.micro"
     tags {
         Name = "XPenses-${var.environment}"
+        terraform = true
+        environment = "${var.environment}"
     }
     vpc_security_group_ids = ["${aws_security_group.xpenses_host_sg.id}"]
 }

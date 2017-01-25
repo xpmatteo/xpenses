@@ -12,6 +12,12 @@ cd "$(dirname $0)/.."
 
 environment=$1
 
+terraform remote config \
+    -backend=s3 \
+    -backend-config="bucket=xpenses.tfstate" \
+    -backend-config="key=network/$environment/terraform.tfstate" \
+    -backend-config="region=eu-central-1"
+
 terraform apply -var environment=$environment provision
 
 
