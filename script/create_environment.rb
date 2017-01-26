@@ -38,13 +38,14 @@ sg = create_security_group 'xpenses-host', @env do |sg|
   })
 end
 
-@instance = create_instance 'xpenses-host', @env, {
+create_instance 'xpenses-host', @env, {
   image_id: "ami-211ada4e",
   key_name: $key_name,
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
 }
-
+print "Publc IP of web host: "
+puts find_instance('xpenses-host', @env).public_ip_address
 
 
 table_name = "xpenses_movements_#{@env}"
