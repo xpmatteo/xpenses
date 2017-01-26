@@ -1,5 +1,3 @@
-require 'minitest/autorun'
-
 require 'aws-sdk'
 require 'ostruct'
 
@@ -18,13 +16,12 @@ def create_instance name, env, params
   }
 
   instances = ec2.create_instances(defaults.merge(params))
-  instance = instances.first
-  instance.wait_until_running
-  instance.create_tags({ tags: [
+  instances.batch_create_tags({ tags: [
     { key: 'Name', value: name },
     { key: 'Env', value: env },
   ]})
-  return instance
+  instances.each { |i| i.wait_until_running }
+  return instances.first
 end
 
 def find_instance name, env
@@ -59,11 +56,11 @@ def delete_instances env
   ]})
   instances.each do |i|
     if i.exists?
-      case i.state.code
-      when 48  # terminated
-        puts "#{i} is already terminated"
+      case i.state.name
+      when "terminated"
+        # do nothing
       else
-        puts "terminating #{i}"
+        puts "terminating #{i.id} (#{i.state.name})"
         i.terminate
       end
     end
@@ -72,6 +69,7 @@ end
 
 require 'net/ping'
 require 'net/ssh'
+require 'minitest/autorun'
 require 'minitest/hooks/test'
 
 class CreateInstanceTest < Minitest::Test
@@ -82,7 +80,7 @@ class CreateInstanceTest < Minitest::Test
     @instance = create_instance @name, "test", {
       image_id: "ami-211ada4e",
       key_name: $key_name,
-      instance_type: "t2.micro"
+      instance_type: "t2.micro",
     }
   end
 
@@ -93,6 +91,7 @@ class CreateInstanceTest < Minitest::Test
   def test_create_instance
     puts "looking for instance #{@name}"
     i = find_instance @name, "test"
+    assert_equal "running", i.state.name
     assert_equal "ami-211ada4e", i.image_id
     assert_equal "t2.micro", i.instance_type
     assert_equal $key_name, i.key_name
