@@ -78,6 +78,15 @@ def delete_security_groups env
   end
 end
 
+def create_security_group name, env
+  sg = ec2.create_security_group({
+    group_name: name,
+    description: "SG for #{name} in #{env}",
+  })
+  sg.create_tags(make_tags(name, env))
+  sg
+end
+
 require 'net/ping'
 require 'net/ssh'
 require 'minitest/autorun'
@@ -93,11 +102,7 @@ class CreateInstanceTest < Minitest::Test
     ec2 = Aws::EC2::Resource.new(region: $region)
 
     sg_name = 'web-host'
-    sg = ec2.create_security_group({
-      group_name: sg_name,
-      description: "SG for #{sg_name} in #{@env}",
-    })
-    sg.create_tags(make_tags(sg_name, @env))
+    sg = create_security_group 'web-host', @env
     sg.authorize_ingress({
       ip_permissions: [{
         ip_protocol: 'icmp',
@@ -108,7 +113,6 @@ class CreateInstanceTest < Minitest::Test
         }]
       }]
     })
-
     @instance = create_instance @name, @env, {
       image_id: "ami-211ada4e",
       key_name: $key_name,
@@ -120,6 +124,7 @@ class CreateInstanceTest < Minitest::Test
   def after_all
     delete_instances @env
     delete_security_groups @env
+  rescue
   end
 
   def test_create_instance
@@ -149,7 +154,7 @@ class CreateInstanceTest < Minitest::Test
     assert pingable?(i.public_ip_address), "instance should be pingable"
   end
 
-  def xtest_can_ssh_instance
+  def test_can_ssh_instance
     i = find_instance @name, @env
     puts "Pinging #{i.public_ip_address}"
     assert sshable?(i.public_ip_address), "pingable"
