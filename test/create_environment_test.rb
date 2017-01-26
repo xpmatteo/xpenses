@@ -25,12 +25,7 @@ def create_instance name, env, params
 end
 
 def find_instance name, env
-  ec2 = Aws::EC2::Resource.new(region: $region)
-
-  instances= ec2.instances({filters: [
-    {name: 'tag:Name', values: [name]},
-    {name: 'tag:Env', values: [env]},
-  ]})
+  instances = find_instances(name, env)
   if instances.count == 0
     nil
   else
@@ -76,8 +71,9 @@ class CreateInstanceTest < Minitest::Test
   include Minitest::Hooks
 
   def before_all
+    @env = "test_#{ENV['USER']}"
     @name = "test_instance_#{rand(10000)}"
-    @instance = create_instance @name, "test", {
+    @instance = create_instance @name, @env, {
       image_id: "ami-211ada4e",
       key_name: $key_name,
       instance_type: "t2.micro",
@@ -85,12 +81,13 @@ class CreateInstanceTest < Minitest::Test
   end
 
   def after_all
-    delete_instances "test"
+    delete_instances @env
   end
 
   def test_create_instance
     puts "looking for instance #{@name}"
-    i = find_instance @name, "test"
+    i = find_instance @name, @env
+    assert i.exists?, "instance should exist"
     assert_equal "running", i.state.name
     assert_equal "ami-211ada4e", i.image_id
     assert_equal "t2.micro", i.instance_type
@@ -100,22 +97,22 @@ class CreateInstanceTest < Minitest::Test
   end
 
   def test_instance_already_existing
-    create_instance @name, "test", {
+    create_instance @name, @env, {
       image_id: "ami-211ada4e",
       key_name: $key_name,
       instance_type: "t2.micro"
     }
-    assert_equal 1, find_instances(@name, "test").count
+    assert_equal 1, find_instances(@name, @env).count
   end
 
   def test_can_ping_instance
-    i = find_instance @name, "test"
+    i = find_instance @name, @env
     puts "Pinging #{i.public_ip_address}"
-    assert pingable?(i.public_ip_address), "pingable"
+    assert pingable?(i.public_ip_address), "instance should be pingable"
   end
 
   def xtest_can_ssh_instance
-    i = find_instance @name, "test"
+    i = find_instance @name, @env
     puts "Pinging #{i.public_ip_address}"
     assert sshable?(i.public_ip_address), "pingable"
   end
