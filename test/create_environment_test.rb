@@ -1,10 +1,18 @@
 require 'aws-sdk'
 require 'ostruct'
 
-# see docs here: http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Instance.html
+# see api docs here: http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Instance.html
+# see examples here: http://docs.aws.amazon.com/sdk-for-ruby/v2/developer-guide/
 
 $region = 'eu-central-1'
 $key_name = 'matteo-free'
+
+def make_tags name, env
+  { tags: [
+      { key: 'Name', value: name },
+      { key: 'Env', value: env },
+  ]}
+end
 
 def create_instance name, env, params
   return if find_instance name, env
@@ -16,10 +24,7 @@ def create_instance name, env, params
   }
 
   instances = ec2.create_instances(defaults.merge(params))
-  instances.batch_create_tags({ tags: [
-    { key: 'Name', value: name },
-    { key: 'Env', value: env },
-  ]})
+  instances.batch_create_tags(make_tags(name, env))
   instances.each { |i| i.wait_until_running }
   return instances.first
 end
@@ -62,6 +67,17 @@ def delete_instances env
   end
 end
 
+def delete_security_groups env
+  ec2 = Aws::EC2::Resource.new(region: $region)
+
+  groups = ec2.security_groups({filters: [
+    {name: 'tag:Env', values: [env]},
+  ]})
+  groups.each do |i|
+    i.delete
+  end
+end
+
 require 'net/ping'
 require 'net/ssh'
 require 'minitest/autorun'
@@ -73,15 +89,37 @@ class CreateInstanceTest < Minitest::Test
   def before_all
     @env = "test_#{ENV['USER']}"
     @name = "test_instance_#{rand(10000)}"
+
+    ec2 = Aws::EC2::Resource.new(region: $region)
+
+    sg_name = 'web-host'
+    sg = ec2.create_security_group({
+      group_name: sg_name,
+      description: "SG for #{sg_name} in #{@env}",
+    })
+    sg.create_tags(make_tags(sg_name, @env))
+    sg.authorize_ingress({
+      ip_permissions: [{
+        ip_protocol: 'icmp',
+        from_port: 8,
+        to_port: 0,
+        ip_ranges: [{
+          cidr_ip: '0.0.0.0/0'
+        }]
+      }]
+    })
+
     @instance = create_instance @name, @env, {
       image_id: "ami-211ada4e",
       key_name: $key_name,
       instance_type: "t2.micro",
+      security_group_ids: [sg.id],
     }
   end
 
   def after_all
     delete_instances @env
+    delete_security_groups @env
   end
 
   def test_create_instance
