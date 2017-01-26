@@ -43,6 +43,13 @@ module Infrastructure
     return instances
   end
 
+  def find_all_instances env
+    ec2 = Aws::EC2::Resource.new(region: $region)
+    return ec2.instances({filters: [
+      {name: 'tag:Env', values: [env]},
+    ]})
+  end
+
   def find_security_group name, env
     ec2 = Aws::EC2::Resource.new(region: $region)
 
@@ -54,12 +61,7 @@ module Infrastructure
   end
 
   def delete_instances env
-    ec2 = Aws::EC2::Resource.new(region: $region)
-
-    instances= ec2.instances({filters: [
-      {name: 'tag:Env', values: [env]},
-    ]})
-    instances.each do |i|
+    find_all_instances(@env).each do |i|
       if i.exists?
         case i.state.name
         when "terminated"
@@ -94,6 +96,16 @@ module Infrastructure
     sg.create_tags(make_tags(name, env))
     yield sg
     return sg
+  end
+
+  def delete_tables env
+    dyn = Aws::DynamoDB::Resource.new(region: $region)
+    dyn.tables.each do |table|
+      if table.name.end_with?(env)
+        puts "Deleting table #{table.name}"
+        table.delete
+      end
+    end
   end
 
   private
