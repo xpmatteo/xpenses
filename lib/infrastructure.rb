@@ -10,8 +10,12 @@ $key_name = 'matteo-free'
 module Infrastructure
 
   def create_instance name, env, params
-    return if find_instance name, env
+    if find_instance name, env
+      puts "Instance #{name} in #{@env} already exists"
+      return
+    end
 
+    puts "Creating instance #{name} in #{@env}"
     ec2 = Aws::EC2::Resource.new(region: $region)
     defaults = {
       min_count: 1,
@@ -105,6 +109,18 @@ module Infrastructure
         puts "Deleting table #{table.name}"
         table.delete
       end
+    end
+  end
+
+  def create_table name, env, params
+    dyn = Aws::DynamoDB::Resource.new(region: $region)
+    if dyn.tables.find { |t| t.table_name == name }
+      puts "Table #{name} already exists"
+    else
+      puts "Creating table #{name}"
+      dynamodb_client = Aws::DynamoDB::Client.new(region: $region)
+      dynamodb_client.create_table(params)
+      dynamodb_client.wait_until(:table_exists, table_name: name)
     end
   end
 
