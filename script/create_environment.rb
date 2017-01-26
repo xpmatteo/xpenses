@@ -12,7 +12,6 @@ include Infrastructure
 
 @env = ARGV[0]
 
-puts "Creating instance..."
 sg = create_security_group 'xpenses-host', @env do |sg|
   sg.authorize_ingress({
     ip_permissions: [
@@ -38,14 +37,15 @@ sg = create_security_group 'xpenses-host', @env do |sg|
   })
 end
 
-create_instance 'xpenses-host', @env, {
+instance_name = 'xpenses-host'
+create_instance instance_name, @env, {
   image_id: "ami-211ada4e",
   key_name: $key_name,
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
 }
-print "Publc IP of web host: "
-puts find_instance('xpenses-host', @env).public_ip_address
+print "Publc IP of #{instance_name}: "
+puts find_instance(instance_name, @env).public_ip_address
 
 
 table_name = "xpenses_movements_#{@env}"

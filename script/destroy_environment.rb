@@ -12,12 +12,11 @@ include Infrastructure
 
 @env = ARGV[0]
 
-puts "Deleting instances..."
 delete_instances @env
-puts "Waiting until all instances are terminated..."
-find_all_instances(@env).each { |i| i.wait_until_terminated  }
-puts "Deleting security groups..."
+find_all_instances(@env).each { |i|
+  puts "Waiting for instance #{i.id} to terminate"
+  i.wait_until_terminated
+}
 delete_security_groups @env
-puts "Deleting tables..."
 delete_tables @env
 

@@ -10,12 +10,13 @@ $key_name = 'matteo-free'
 module Infrastructure
 
   def create_instance name, env, params
-    if find_instance name, env
-      puts "Instance #{name} in #{@env} already exists"
-      return
+    find_instances(name, env).each do |i|
+      next if %w(terminated shutting-down).include?(i.state.name)
+      puts "Instance #{name} #{i} in #{env} already exists (#{i.state.name})"
+      return i
     end
 
-    puts "Creating instance #{name} in #{@env}"
+    puts "Creating instance #{name} in #{env}"
     ec2 = Aws::EC2::Resource.new(region: $region)
     defaults = {
       min_count: 1,
@@ -65,11 +66,11 @@ module Infrastructure
   end
 
   def delete_instances env
-    find_all_instances(@env).each do |i|
+    find_all_instances(env).each do |i|
       if i.exists?
         case i.state.name
         when "terminated"
-          # do nothing
+          puts "instance #{i.id} is already #{i.state.name}"
         else
           puts "terminating #{i.id} (#{i.state.name})"
           i.terminate
@@ -85,13 +86,17 @@ module Infrastructure
       {name: 'tag:Env', values: [env]},
     ]})
     groups.each do |i|
+      puts "Deleting security group #{i.group_name} in #{env}"
       i.delete
     end
   end
 
   def create_security_group name, env
-    sg = find_security_group(name, env)
-    return sg if sg
+    if sg = find_security_group(name, env)
+      puts "Security group #{name} in #{env} already exists"
+      return sg
+    end
+    puts "Creating security group #{name} in #{env}"
     ec2 = Aws::EC2::Resource.new(region: $region)
     sg = ec2.create_security_group({
       group_name: name,
@@ -115,9 +120,9 @@ module Infrastructure
   def create_table name, env, params
     dyn = Aws::DynamoDB::Resource.new(region: $region)
     if dyn.tables.find { |t| t.table_name == name }
-      puts "Table #{name} already exists"
+      puts "Table #{name} in #{env} already exists"
     else
-      puts "Creating table #{name}"
+      puts "Creating table #{name} in #{env}"
       dynamodb_client = Aws::DynamoDB::Client.new(region: $region)
       dynamodb_client.create_table(params)
       dynamodb_client.wait_until(:table_exists, table_name: name)
