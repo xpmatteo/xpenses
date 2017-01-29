@@ -143,6 +143,55 @@ module Infrastructure
     dyn.tables.find { |t| t.table_name == name }
   end
 
+  def create_instance_profile_with_role name
+    # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
+
+    name = name + rand(10000).to_s
+    puts "Creating role #{name}"
+
+    role_name = name
+    policy_name = name
+    profile_name = name
+
+    client = Aws::IAM::Client.new(region: $region)
+    iam = Aws::IAM::Resource.new(client: client)
+
+    # Let EC2 assume a role
+    policy_doc = {
+      Version:"2012-10-17",
+      Statement:[
+        {
+          Effect:"Allow",
+          Principal:{
+            Service:"ec2.amazonaws.com"
+          },
+          Action:"sts:AssumeRole"
+      }]
+    }
+
+    role = iam.create_role({
+      role_name: role_name,
+      assume_role_policy_document: policy_doc.to_json
+    })
+
+    # Give the role full access to DynamoDB
+    role.attach_policy({
+      policy_arn: 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
+    })
+
+    response = client.create_instance_profile({
+      instance_profile_name: profile_name,
+    })
+    sleep 10
+
+    client.add_role_to_instance_profile({
+      instance_profile_name: profile_name,
+      role_name: role_name,
+    })
+
+    return response.instance_profile
+  end
+
   private
 
   def make_tags name, env

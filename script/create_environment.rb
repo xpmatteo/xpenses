@@ -16,7 +16,7 @@ include Infrastructure
 # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
 # use the convention [project]_[rolename]_[environment]
 role_name = "xpenses_web_host_#{@env}"
-puts "Creating role #{role_name}"
+instance_profile = create_instance_profile_with_role role_name
 
 # security group names must be unique within the VPC
 # for the time being, use the convention [project]_[rolename]_[environment]
@@ -45,6 +45,11 @@ sg = create_security_group "xpenses_web_host_#{@env}", @env do |sg|
   })
 end
 
+puts "sleeping..."
+sleep 10 # wait for roles to propagate :-(
+
+#binding.pry
+
 instance_name = 'xpenses-web'
 create_instance instance_name, @env, {
   image_id: "ami-211ada4e",
@@ -52,6 +57,7 @@ create_instance instance_name, @env, {
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
 #  iam_instance_profile: { arn: instance_profile.arn },
+ iam_instance_profile: { name: instance_profile.instance_profile_name },
 }
 print "Publc IP of #{instance_name}: "
 puts find_instance(instance_name, @env).public_ip_address
