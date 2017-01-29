@@ -14,7 +14,7 @@ include Infrastructure
 
 delete_instances @env
 find_all_instances(@env).each { |i|
-  next if i.state.name = 'terminated'
+  next if i.state.name == 'terminated'
   puts "Waiting for instance #{i.id} to terminate"
   i.wait_until_terminated
 }

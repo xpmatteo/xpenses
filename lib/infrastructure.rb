@@ -48,6 +48,10 @@ module Infrastructure
     return instances
   end
 
+  def find_all_live_instances env
+    find_all_instances(env).reject { |i| %w(terminated shutting-down).include?(i.state.name) }
+  end
+
   def find_all_instances env
     ec2 = Aws::EC2::Resource.new(region: $region)
     return ec2.instances({filters: [
@@ -127,6 +131,16 @@ module Infrastructure
       dynamodb_client.create_table(params)
       dynamodb_client.wait_until(:table_exists, table_name: name)
     end
+  end
+
+  def find_all_tables env
+    dyn = Aws::DynamoDB::Resource.new(region: $region)
+    dyn.tables.select { |t| t.table_name.end_with? env }
+  end
+
+  def find_table name
+    dyn = Aws::DynamoDB::Resource.new(region: $region)
+    dyn.tables.find { |t| t.table_name == name }
   end
 
   private
