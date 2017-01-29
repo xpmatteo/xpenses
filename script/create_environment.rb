@@ -18,7 +18,9 @@ include Infrastructure
 role_name = "xpenses_web_host_#{@env}"
 puts "Creating role #{role_name}"
 
-sg = create_security_group 'xpenses-host', @env do |sg|
+# security group names must be unique within the VPC
+# for the time being, use the convention [project]_[rolename]_[environment]
+sg = create_security_group "xpenses_web_host_#{@env}", @env do |sg|
   sg.authorize_ingress({
     ip_permissions: [
       {
@@ -43,15 +45,13 @@ sg = create_security_group 'xpenses-host', @env do |sg|
   })
 end
 
-instance_name = 'xpenses-host'
+instance_name = 'xpenses-web'
 create_instance instance_name, @env, {
   image_id: "ami-211ada4e",
   key_name: $key_name,
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
-  iam_instance_profile: {
-    arn: instance_profile.arn
-  }
+#  iam_instance_profile: { arn: instance_profile.arn },
 }
 print "Publc IP of #{instance_name}: "
 puts find_instance(instance_name, @env).public_ip_address
