@@ -1,17 +1,11 @@
 require 'net/ping'
 require 'net/ssh'
 require 'minitest/autorun'
-require 'minitest/hooks/test'
 
 require 'infrastructure'
 
 class CreateInstanceTest < Minitest::Test
-  include Minitest::Hooks
   include Infrastructure
-
-  def after_all
-    system "script/destroy_environment.rb #{@env}"
-  end
 
   def test_create_environment
     @env = "test_#{ENV['USER']}"
