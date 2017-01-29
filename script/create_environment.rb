@@ -12,6 +12,12 @@ include Infrastructure
 
 @env = ARGV[0]
 
+# role names must be unique per account and can't be tagged
+# see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
+# use the convention [project]_[rolename]_[environment]
+role_name = "xpenses_web_host_#{@env}"
+puts "Creating role #{role_name}"
+
 sg = create_security_group 'xpenses-host', @env do |sg|
   sg.authorize_ingress({
     ip_permissions: [
@@ -43,11 +49,16 @@ create_instance instance_name, @env, {
   key_name: $key_name,
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
+  iam_instance_profile: {
+    arn: instance_profile.arn
+  }
 }
 print "Publc IP of #{instance_name}: "
 puts find_instance(instance_name, @env).public_ip_address
 
 
+# table names must be unique within region and can't be tagged
+# use the convention [project]_[tablename]_[environment]
 table_name = "xpenses_movements_#{@env}"
 attribute_defs = [
   { attribute_name: 'id',        attribute_type: 'S' },
