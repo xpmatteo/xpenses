@@ -38,6 +38,15 @@ class CreateInstanceTest < Minitest::Test
     assert_equal "t2.micro", i.instance_type
     assert_match /172\.\d{1,3}\.\d{1,3}\.\d{1,3}/, i.private_ip_address
     assert_match /35\.\d{1,3}\.\d{1,3}\.\d{1,3}/, i.public_ip_address
+
+    check_dynamodb_is_accessible i.public_ip_address
+  end
+
+  def check_dynamodb_is_accessible host
+    Net::SSH.start(host, 'ec2-user', keys: %w(~/.ssh/aws) ) do |ssh|
+      response = ssh.exec!("aws dynamodb --region eu-cental-1 list-tables")
+      assert response.include?("xpenses_movements_#{@env}"), "Dynamodb not accessible?\n#{response}"
+    end
   end
 
   def check_environment_destroyed
@@ -48,13 +57,6 @@ class CreateInstanceTest < Minitest::Test
   def pingable?(host)
     check = Net::Ping::External.new(host)
     check.ping?
-  end
-
-  def sshable? host
-    puts "SSHing #{host} ..."
-    Net::SSH.start(host.to_s, 'ec2-user', :password => 'badpassword' ) do |ssh|
-      p ssh
-    end
   end
 
   def sh command
