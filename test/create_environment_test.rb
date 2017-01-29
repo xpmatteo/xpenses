@@ -44,7 +44,7 @@ class CreateInstanceTest < Minitest::Test
 
   def check_dynamodb_is_accessible host
     Net::SSH.start(host, 'ec2-user', keys: %w(~/.ssh/aws) ) do |ssh|
-      response = ssh.exec!("aws dynamodb --region eu-cental-1 list-tables")
+      response = ssh.exec!("aws dynamodb --region #{$region} list-tables")
       assert response.include?("xpenses_movements_#{@env}"), "Dynamodb not accessible?\n#{response}"
     end
   end
