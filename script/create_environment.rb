@@ -15,8 +15,29 @@ include Infrastructure
 # role names must be unique per account and can't be tagged
 # use the convention [component]-[role]-[environment]
 role_name = "xpenses-web-#{@env}"
+
+policy = <<EOS
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DescribeQueryScanBooksTable",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:DescribeTable",
+                "dynamodb:Query",
+                "dynamodb:Scan"
+            ],
+            "Resource": "arn:aws:dynamodb:us-west-2:account-id:table/Books"
+        }
+    ]
+}
+EOS
+
 instance_profile = create_instance_profile_with_policy role_name, {
-  policy_arn: 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
+  role_name: role_name,
+  policy_name: role_name,
+  policy_document: policy,
 }
 
 # security group names must be unique within the VPC

@@ -171,7 +171,7 @@ module Infrastructure
       puts "Role #{role_name} already exists"
     else
       puts "Creating role #{role_name}"
-      # Let EC2 assume a role
+      # This role can be assumed by EC2
       policy_doc = {
         Version:"2012-10-17",
         Statement:[
@@ -189,7 +189,12 @@ module Infrastructure
         assume_role_policy_document: policy_doc.to_json
       })
 
-      role.attach_policy policy
+      # for a managed policy, use
+      # role.attach_policy policy
+
+      # the following is for an inline policy
+      client.put_role_policy policy
+
       puts "Waiting for roles to propagate..."
       sleep 5
     end
@@ -232,6 +237,11 @@ module Infrastructure
           puts "Removing managed policy #{policy.policy_name} from role #{name}"
           role.detach_policy({policy_arn: policy.arn})
         end
+        puts "Removing inline policy from role #{name}"
+        client.delete_role_policy({
+          role_name: name,
+          policy_name: name,
+        })
         puts "Deleting role #{name}"
         role.delete
       end
