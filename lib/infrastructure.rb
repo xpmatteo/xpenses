@@ -237,11 +237,15 @@ module Infrastructure
           puts "Removing managed policy #{policy.policy_name} from role #{name}"
           role.detach_policy({policy_arn: policy.arn})
         end
-        puts "Removing inline policy from role #{name}"
-        client.delete_role_policy({
-          role_name: name,
-          policy_name: name,
-        })
+        begin
+          puts "Removing inline policy from role #{name}"
+          client.delete_role_policy({
+            role_name: name,
+            policy_name: name,
+          })
+        rescue Aws::IAM::Errors::NoSuchEntity
+          puts "No inline policy found in role #{name}"
+        end
         puts "Deleting role #{name}"
         role.delete
       end
