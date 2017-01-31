@@ -159,20 +159,14 @@ module Infrastructure
   end
 
   def create_instance_profile_with_policy name, policy
-    # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
-
-    role_name = name
-    policy_name = name
-    profile_name = name
-
     client = Aws::IAM::Client.new(region: $region)
     iam = Aws::IAM::Resource.new(client: client)
 
-    role = find_role(role_name)
+    role = find_role(name)
     if role
-      puts "Role #{role_name} already exists"
+      puts "Role #{name} already exists"
     else
-      puts "Creating role #{role_name}"
+      puts "Creating role #{name}"
       # This role can be assumed by EC2
       policy_doc = {
         Version:"2012-10-17",
@@ -187,7 +181,7 @@ module Infrastructure
       }
 
       role = iam.create_role({
-        role_name: role_name,
+        role_name: name,
         assume_role_policy_document: policy_doc.to_json
       })
 
@@ -195,7 +189,11 @@ module Infrastructure
       # role.attach_policy policy
 
       # the following is for an inline policy
-      client.put_role_policy policy
+      client.put_role_policy({
+        role_name: name,
+        policy_name: name,
+        policy_document: policy,
+      })
 
       puts "Waiting for roles to propagate..."
       sleep 5
@@ -207,11 +205,11 @@ module Infrastructure
     else
       puts "Creating instance profile #{name}"
       response = client.create_instance_profile({
-        instance_profile_name: profile_name,
+        instance_profile_name: name,
       })
       client.add_role_to_instance_profile({
-        instance_profile_name: profile_name,
-        role_name: role_name,
+        instance_profile_name: name,
+        role_name: name,
       })
       instance_profile = response.instance_profile
       puts "Waiting for instance_profile to propagate..."

@@ -46,6 +46,7 @@ policy_for_web_host = <<EOS
             "Action": [
                 "dynamodb:DescribeTable",
                 "dynamodb:Query",
+                "dynamodb:PutItem",
                 "dynamodb:Scan"
             ],
             "Resource": "#{find_table(table_name).table_arn}"
@@ -53,12 +54,7 @@ policy_for_web_host = <<EOS
     ]
 }
 EOS
-
-instance_profile = create_instance_profile_with_policy role_name, {
-  role_name: role_name,
-  policy_name: role_name,
-  policy_document: policy_for_web_host,
-}
+instance_profile = create_instance_profile_with_policy role_name, policy_for_web_host
 
 # security group names must be unique within the VPC
 # use the convention [component]-[role]-[environment]
@@ -93,8 +89,7 @@ create_instance instance_name, @env, {
   key_name: $key_name,
   instance_type: "t2.micro",
   security_group_ids: [sg.id],
-#  iam_instance_profile: { arn: instance_profile.arn },
- iam_instance_profile: { name: instance_profile.instance_profile_name },
+  iam_instance_profile: { name: instance_profile.instance_profile_name },
 }
 print "Publc IP of #{instance_name}: "
 puts find_instance(instance_name, @env).public_ip_address
