@@ -191,7 +191,7 @@ module Infrastructure
 
       role.attach_policy policy
       puts "Waiting for roles to propagate..."
-      sleep 10
+      sleep 5
     end
 
     instance_profile = find_instance_profile(name)
@@ -207,6 +207,8 @@ module Infrastructure
         role_name: role_name,
       })
       instance_profile = response.instance_profile
+      puts "Waiting for instance_profile to propagate..."
+      sleep 5
     end
     return instance_profile
   end
@@ -218,9 +220,9 @@ module Infrastructure
       name = ip.instance_profile_name
       if name.end_with? env
         puts "Detaching role #{name} from instance profile #{name}"
-        system "aws iam remove-role-from-instance-profile --instance-profile-name #{name} --role-name #{name}"
+        client.remove_role_from_instance_profile({instance_profile_name: name, role_name: name})
         puts "Deleting instance profile #{name}"
-        system "aws iam delete-instance-profile --instance-profile-name #{name}"
+        client.delete_instance_profile({instance_profile_name: name})
       end
     end
     iam.roles.each do |role|
