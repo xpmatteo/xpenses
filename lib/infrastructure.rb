@@ -194,9 +194,6 @@ module Infrastructure
         policy_name: name,
         policy_document: policy,
       })
-
-      puts "Waiting for roles to propagate..."
-      sleep 5
     end
 
     instance_profile = find_instance_profile(name)
@@ -213,7 +210,7 @@ module Infrastructure
       })
       instance_profile = response.instance_profile
       puts "Waiting for instance_profile to propagate..."
-      sleep 5
+      sleep 10
     end
     return instance_profile
   end

@@ -42,7 +42,7 @@ class CreateInstanceTest < Minitest::Test
   end
 
   def check_dynamodb_is_accessible host
-    tries ||= 2
+    tries ||= 3
     Net::SSH.start(host, 'ec2-user', keys: %w(~/.ssh/aws) ) do |ssh|
       query = %[aws dynamodb query --table-name xpenses-movements-#{@env} --key-condition-expression 'id = :v' --expression-attribute-values '{":v": {"S": "0"}}']
       response = ssh.exec!("#{query} --region #{$region}")
@@ -50,11 +50,11 @@ class CreateInstanceTest < Minitest::Test
     end
   rescue
     unless (tries -= 1).zero?
-    puts "Retrying..."
+      puts "Trying to ssh to instance..."
       sleep 5
       retry
     else
-      fail
+      fail "Couldn't ssh to instance"
     end
   end
 
