@@ -121,12 +121,12 @@ module Infrastructure
     end
   end
 
-  def create_table name, env, params
+  def create_table name, params
     dyn = Aws::DynamoDB::Resource.new(region: $region)
     if dyn.tables.find { |t| t.table_name == name }
-      puts "Table #{name} in #{env} already exists"
+      puts "Table #{name} already exists"
     else
-      puts "Creating table #{name} in #{env}"
+      puts "Creating table #{name}"
       dynamodb_client = Aws::DynamoDB::Client.new(region: $region)
       dynamodb_client.create_table(params)
       dynamodb_client.wait_until(:table_exists, table_name: name)
@@ -143,11 +143,10 @@ module Infrastructure
     dyn.tables.find { |t| t.table_name == name }
   end
 
-  def create_instance_profile_with_role name
+  def create_instance_profile_with_policy name, policy
     # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
 
-    name = name + rand(10000).to_s
-    puts "Creating role #{name}"
+    puts "Creating instance profile and role #{name}"
 
     role_name = name
     policy_name = name
@@ -175,13 +174,12 @@ module Infrastructure
     })
 
     # Give the role full access to DynamoDB
-    role.attach_policy({
-      policy_arn: 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
-    })
+    role.attach_policy policy
 
     response = client.create_instance_profile({
       instance_profile_name: profile_name,
     })
+    puts "Waiting for roles to propagate..."
     sleep 10
 
     client.add_role_to_instance_profile({

@@ -14,13 +14,15 @@ include Infrastructure
 
 # role names must be unique per account and can't be tagged
 # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
-# use the convention [project]_[rolename]_[environment]
-role_name = "xpenses_web_host_#{@env}"
-instance_profile = create_instance_profile_with_role role_name
+# use the convention [component]-[role]-[environment]
+role_name = "xpenses-web-#{@env}"
+instance_profile = create_instance_profile_with_policy role_name, {
+  policy_arn: 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
+}
 
 # security group names must be unique within the VPC
-# for the time being, use the convention [project]_[rolename]_[environment]
-sg = create_security_group "xpenses_web_host_#{@env}", @env do |sg|
+# use the convention [component]-[role]-[environment]
+sg = create_security_group "xpenses-web-#{@env}", @env do |sg|
   sg.authorize_ingress({
     ip_permissions: [
       {
@@ -45,11 +47,6 @@ sg = create_security_group "xpenses_web_host_#{@env}", @env do |sg|
   })
 end
 
-puts "sleeping..."
-sleep 10 # wait for roles to propagate :-(
-
-#binding.pry
-
 instance_name = 'xpenses-web'
 create_instance instance_name, @env, {
   image_id: "ami-211ada4e",
@@ -64,8 +61,8 @@ puts find_instance(instance_name, @env).public_ip_address
 
 
 # table names must be unique within region and can't be tagged
-# use the convention [project]_[tablename]_[environment]
-table_name = "xpenses_movements_#{@env}"
+# use the convention [component]-[tablename]-[environment]
+table_name = "xpenses-movements-#{@env}"
 attribute_defs = [
   { attribute_name: 'id',        attribute_type: 'S' },
   { attribute_name: 'date',      attribute_type: 'S' },
@@ -80,4 +77,4 @@ request = {
   key_schema:               key_schema,
   provisioned_throughput:   { read_capacity_units: 5, write_capacity_units: 5 }
 }
-create_table table_name, @env, request
+create_table table_name request
