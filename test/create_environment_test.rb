@@ -10,19 +10,19 @@ class CreateInstanceTest < Minitest::Test
     @env = "test_#{ENV['USER']}"
 
     puts " *** creating env"
-    sh "script/create_environment.rb #{@env}"
+    sh "script/create-environment.rb #{@env}"
     check_environment_ok
 
     puts " *** creating env for the second time"
-    sh "script/create_environment.rb #{@env}"
+    sh "script/create-environment.rb #{@env}"
     check_environment_ok
 
     puts " *** destroying env"
-    sh "script/destroy_environment.rb #{@env}"
+    sh "script/destroy-environment.rb #{@env}"
     check_environment_destroyed
 
     puts " *** destroying env for the second time"
-    sh "script/destroy_environment.rb #{@env}"
+    sh "script/destroy-environment.rb #{@env}"
   end
 
   private
@@ -43,8 +43,9 @@ class CreateInstanceTest < Minitest::Test
 
   def check_dynamodb_is_accessible host
     Net::SSH.start(host, 'ec2-user', keys: %w(~/.ssh/aws) ) do |ssh|
-      response = ssh.exec!("aws dynamodb --region #{$region} list-tables")
-      assert response.include?("xpenses-movements-#{@env}"), "Dynamodb not accessible?\n#{response}"
+      query = %[aws dynamodb query --table-name xpenses-movements-#{@env} --key-condition-expression 'id = :v' --expression-attribute-values '{":v": {"S": "0"}}']
+      response = ssh.exec!("#{query} --region #{$region}")
+      assert response.include?('"Count": 0'), "Dynamodb not accessible?\n#{response}"
     end
   end
 

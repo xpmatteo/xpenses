@@ -12,11 +12,31 @@ include Infrastructure
 
 @env = ARGV[0]
 
+
+# table names must be unique within region and can't be tagged
+# use the convention [component]-[tablename]-[environment]
+table_name = "xpenses-movements-#{@env}"
+attribute_defs = [
+  { attribute_name: 'id',        attribute_type: 'S' },
+  { attribute_name: 'date',      attribute_type: 'S' },
+]
+key_schema = [
+  { attribute_name: 'id', key_type: 'HASH' },
+  { attribute_name: 'date', key_type: 'RANGE' },
+]
+request = {
+  attribute_definitions:    attribute_defs,
+  table_name:               table_name,
+  key_schema:               key_schema,
+  provisioned_throughput:   { read_capacity_units: 5, write_capacity_units: 5 }
+}
+create_table table_name, request
+
 # role names must be unique per account and can't be tagged
 # use the convention [component]-[role]-[environment]
 role_name = "xpenses-web-#{@env}"
 
-policy = <<EOS
+policy_for_web_host = <<EOS
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -28,7 +48,7 @@ policy = <<EOS
                 "dynamodb:Query",
                 "dynamodb:Scan"
             ],
-            "Resource": "arn:aws:dynamodb:us-west-2:account-id:table/Books"
+            "Resource": "#{find_table(table_name).table_arn}"
         }
     ]
 }
@@ -37,7 +57,7 @@ EOS
 instance_profile = create_instance_profile_with_policy role_name, {
   role_name: role_name,
   policy_name: role_name,
-  policy_document: policy,
+  policy_document: policy_for_web_host,
 }
 
 # security group names must be unique within the VPC
@@ -79,22 +99,3 @@ create_instance instance_name, @env, {
 print "Publc IP of #{instance_name}: "
 puts find_instance(instance_name, @env).public_ip_address
 
-
-# table names must be unique within region and can't be tagged
-# use the convention [component]-[tablename]-[environment]
-table_name = "xpenses-movements-#{@env}"
-attribute_defs = [
-  { attribute_name: 'id',        attribute_type: 'S' },
-  { attribute_name: 'date',      attribute_type: 'S' },
-]
-key_schema = [
-  { attribute_name: 'id', key_type: 'HASH' },
-  { attribute_name: 'date', key_type: 'RANGE' },
-]
-request = {
-  attribute_definitions:    attribute_defs,
-  table_name:               table_name,
-  key_schema:               key_schema,
-  provisioned_throughput:   { read_capacity_units: 5, write_capacity_units: 5 }
-}
-create_table table_name, request

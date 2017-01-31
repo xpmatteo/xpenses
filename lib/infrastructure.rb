@@ -124,14 +124,16 @@ module Infrastructure
 
   def create_table name, params
     dyn = Aws::DynamoDB::Resource.new(region: $region)
-    if dyn.tables.find { |t| t.table_name == name }
+    table = dyn.tables.find { |t| t.table_name == name }
+    if table
       puts "Table #{name} already exists"
     else
       puts "Creating table #{name}"
-      dynamodb_client = Aws::DynamoDB::Client.new(region: $region)
-      dynamodb_client.create_table(params)
-      dynamodb_client.wait_until(:table_exists, table_name: name)
+      client = Aws::DynamoDB::Client.new(region: $region)
+      table = client.create_table(params)
+      client.wait_until(:table_exists, table_name: name)
     end
+    return table
   end
 
   def find_all_tables env
