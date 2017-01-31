@@ -13,7 +13,6 @@ include Infrastructure
 @env = ARGV[0]
 
 # role names must be unique per account and can't be tagged
-# see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
 # use the convention [component]-[role]-[environment]
 role_name = "xpenses-web-#{@env}"
 instance_profile = create_instance_profile_with_policy role_name, {
@@ -77,4 +76,4 @@ request = {
   key_schema:               key_schema,
   provisioned_throughput:   { read_capacity_units: 5, write_capacity_units: 5 }
 }
-create_table table_name request
+create_table table_name, request

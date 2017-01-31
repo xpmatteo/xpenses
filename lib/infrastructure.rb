@@ -1,5 +1,6 @@
 require 'aws-sdk'
 require 'ostruct'
+require 'pry'
 
 # see api docs here: http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Instance.html
 # see examples here: http://docs.aws.amazon.com/sdk-for-ruby/v2/developer-guide/
@@ -143,10 +144,20 @@ module Infrastructure
     dyn.tables.find { |t| t.table_name == name }
   end
 
+  def find_role name
+    client = Aws::IAM::Client.new(region: $region)
+    iam = Aws::IAM::Resource.new(client: client)
+    iam.roles.find { |r| r.name == name }
+  end
+
+  def find_instance_profile name
+    client = Aws::IAM::Client.new(region: $region)
+    iam = Aws::IAM::Resource.new(client: client)
+    iam.instance_profiles.find { |ip| ip.name == name }
+  end
+
   def create_instance_profile_with_policy name, policy
     # see https://aws.amazon.com/blogs/developer/iam-roles-for-amazon-ec2-instances-credential-management-part-4/
-
-    puts "Creating instance profile and role #{name}"
 
     role_name = name
     policy_name = name
@@ -155,39 +166,74 @@ module Infrastructure
     client = Aws::IAM::Client.new(region: $region)
     iam = Aws::IAM::Resource.new(client: client)
 
-    # Let EC2 assume a role
-    policy_doc = {
-      Version:"2012-10-17",
-      Statement:[
-        {
-          Effect:"Allow",
-          Principal:{
-            Service:"ec2.amazonaws.com"
-          },
-          Action:"sts:AssumeRole"
-      }]
-    }
+    role = find_role(role_name)
+    if role
+      puts "Role #{role_name} already exists"
+    else
+      puts "Creating role #{role_name}"
+      # Let EC2 assume a role
+      policy_doc = {
+        Version:"2012-10-17",
+        Statement:[
+          {
+            Effect:"Allow",
+            Principal:{
+              Service:"ec2.amazonaws.com"
+            },
+            Action:"sts:AssumeRole"
+        }]
+      }
 
-    role = iam.create_role({
-      role_name: role_name,
-      assume_role_policy_document: policy_doc.to_json
-    })
+      role = iam.create_role({
+        role_name: role_name,
+        assume_role_policy_document: policy_doc.to_json
+      })
 
-    # Give the role full access to DynamoDB
-    role.attach_policy policy
+      role.attach_policy policy
+      puts "Waiting for roles to propagate..."
+      sleep 10
+    end
 
-    response = client.create_instance_profile({
-      instance_profile_name: profile_name,
-    })
-    puts "Waiting for roles to propagate..."
-    sleep 10
+    instance_profile = find_instance_profile(name)
+    if instance_profile
+      puts "Instance profile #{name} already exists"
+    else
+      puts "Creating instance profile #{name}"
+      response = client.create_instance_profile({
+        instance_profile_name: profile_name,
+      })
+      client.add_role_to_instance_profile({
+        instance_profile_name: profile_name,
+        role_name: role_name,
+      })
+      instance_profile = response.instance_profile
+    end
+    return instance_profile
+  end
 
-    client.add_role_to_instance_profile({
-      instance_profile_name: profile_name,
-      role_name: role_name,
-    })
-
-    return response.instance_profile
+  def delete_roles env
+    client = Aws::IAM::Client.new(region: $region)
+    iam = Aws::IAM::Resource.new(client: client)
+    iam.instance_profiles.each do |ip|
+      name = ip.instance_profile_name
+      if name.end_with? env
+        puts "Detaching role #{name} from instance profile #{name}"
+        system "aws iam remove-role-from-instance-profile --instance-profile-name #{name} --role-name #{name}"
+        puts "Deleting instance profile #{name}"
+        system "aws iam delete-instance-profile --instance-profile-name #{name}"
+      end
+    end
+    iam.roles.each do |role|
+      name = role.name
+      if name.end_with? env
+        role.attached_policies.each do |policy|
+          puts "Removing managed policy #{policy.policy_name} from role #{name}"
+          role.detach_policy({policy_arn: policy.arn})
+        end
+        puts "Deleting role #{name}"
+        role.delete
+      end
+    end
   end
 
   private

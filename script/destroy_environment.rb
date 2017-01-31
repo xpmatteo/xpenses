@@ -12,6 +12,7 @@ include Infrastructure
 
 @env = ARGV[0]
 
+delete_roles @env
 delete_instances @env
 find_all_instances(@env).each { |i|
   next if i.state.name == 'terminated'

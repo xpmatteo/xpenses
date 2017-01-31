@@ -1,4 +1,3 @@
-require 'net/ping'
 require 'net/ssh'
 require 'minitest/autorun'
 
@@ -45,18 +44,13 @@ class CreateInstanceTest < Minitest::Test
   def check_dynamodb_is_accessible host
     Net::SSH.start(host, 'ec2-user', keys: %w(~/.ssh/aws) ) do |ssh|
       response = ssh.exec!("aws dynamodb --region #{$region} list-tables")
-      assert response.include?("xpenses_movements_#{@env}"), "Dynamodb not accessible?\n#{response}"
+      assert response.include?("xpenses-movements-#{@env}"), "Dynamodb not accessible?\n#{response}"
     end
   end
 
   def check_environment_destroyed
     instances = find_all_live_instances(@env)
     assert_equal [], instances.map{|i| i.state.name}, "instances"
-  end
-
-  def pingable?(host)
-    check = Net::Ping::External.new(host)
-    check.ping?
   end
 
   def sh command
