@@ -1,6 +1,6 @@
 
 
-
+ - remove hardcoded key pair references, use env vars
  - use VPC per env
 
  - actually load the data in dynamodb and perform the calculation
