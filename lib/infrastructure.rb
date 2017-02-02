@@ -249,7 +249,50 @@ module Infrastructure
     end
   end
 
+  def find_all_vpcs env
+    ec2_resource.vpcs({filters: [
+      {name: 'tag:Env', values: [env]},
+    ]})
+  end
+
+  def find_vpcs name, env
+    ec2_resource.vpcs({filters: [
+      {name: 'tag:Name', values: [name]},
+      {name: 'tag:Env', values: [env]},
+    ]})
+  end
+
+  def create_vpc name, env, cidr_block
+    if find_vpcs(name, env).count > 0
+      puts "Already exists: vpc #{name} in #{env}"
+    else
+      puts "Creating vpc #{name} in #{env} cidr #{cidr_block}"
+      vpc = ec2_resource.create_vpc({ cidr_block: cidr_block })
+      vpc.create_tags(make_tags(name, env))
+      return vpc
+    end
+  end
+
+  def destroy_vpc vpc_id
+    puts "Destroying vpc #{vpc_id}"
+    ec2_client.delete_vpc(vpc_id: vpc_id)
+  end
+
+  def destroy_all_vpcs env
+    find_all_vpcs(env).each do |vpc|
+      destroy_vpc vpc.vpc_id
+    end
+  end
+
   private
+
+  def ec2_resource
+    Aws::EC2::Resource.new(region: $region)
+  end
+
+  def ec2_client
+    Aws::EC2::Client.new(region: $region)
+  end
 
   def make_tags name, env
     { tags: [

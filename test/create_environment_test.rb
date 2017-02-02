@@ -64,6 +64,7 @@ class CreateInstanceTest < Minitest::Test
     assert_nil find_instance_profile("xpenses-web-#{@env}"), "instance profile"
     assert_nil find_role("xpenses-web-#{@env}"), "role"
     assert_nil find_table("xpenses-movements-#{@env}"), "table"
+    assert_equal 0, find_all_vpcs(@env).count
   end
 
   def sh command
