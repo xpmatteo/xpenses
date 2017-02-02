@@ -12,8 +12,7 @@ include Infrastructure
 
 @env = ARGV[0]
 
-create_vpc "xpenses", @env, "10.0.0.0/16"
-
+vpc = create_vpc "xpenses", @env, "10.0.0.0/16"
 
 # table names must be unique within region and can't be tagged
 # use the convention [component]-[tablename]-[environment]

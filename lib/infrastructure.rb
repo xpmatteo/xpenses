@@ -263,8 +263,10 @@ module Infrastructure
   end
 
   def create_vpc name, env, cidr_block
-    if find_vpcs(name, env).count > 0
+    vpcs = find_vpcs(name, env)
+    if vpcs.count > 0
       puts "Already exists: vpc #{name} in #{env}"
+      return vpcs.first
     else
       puts "Creating vpc #{name} in #{env} cidr #{cidr_block}"
       vpc = ec2_resource.create_vpc({ cidr_block: cidr_block })
