@@ -34,8 +34,16 @@ TEST CREATION AND DESTRUCTION OF ENVS
 
 CREATE A LOCAL SET OF TABLES
 
-    DYNAMODB_ENDPOINT=http://localhost:8000 script/create-tables.rb local
-    DYNAMODB_ENDPOINT=http://localhost:8000 script/destroy-tables.rb local
+The local tables are implemented in a local dynamodb, running on port 8000.
+The tables will be defined in two environments:
+
+ * local-dev (for interactive testing)
+ * local-test (for automated testing)
+
+.
+
+    script/create-local-tables.sh
+    script/destroy-local-tables.sh
 
 RUN locally:
 

@@ -1,20 +1,6 @@
 #!/usr/bin/env ruby
 
-$:.push File.dirname(__FILE__) + '/../lib/'
-
-if ARGV.size != 1
-  puts "Usage: #{$0} <environment>"
-  exit 1
-end
-
-require 'infrastructure'
-include Infrastructure
-
-@env = ARGV[0]
-if ENV['DYNAMODB_ENDPOINT']
-  Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
-end
-
+require_relative 'lib/env-scripts-preamble'
 
 # table names must be unique within region and can't be tagged
 # use the convention [component]-[tablename]-[environment]
