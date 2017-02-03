@@ -2,14 +2,20 @@ require 'sinatra'
 require 'json'
 require "aws-sdk-core"
 
-Aws.config.update({
-  region: 'eu-central-1',
-})
+Aws.config.update({ region: 'eu-central-1' })
+if ENV['DYNAMODB_ENDPOINT']
+  Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
+end
 
 
 get '/' do
   send_file 'public/index.html', type: :html
 end
+
+get '/js/jquery' do
+  send_file 'public/js/jquery-1.10.2.js', type: :json
+end
+
 
 get '/api/summary' do
   content_type :json

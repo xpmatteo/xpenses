@@ -23,12 +23,25 @@ You will need `ruby` and `gem` installed.  Then execute
 
 MANIPULATE ENVIRONMENTS
 
-    script/create-environment.sh foo
-    script/destroy-environment.sh foo
+    script/create-environment.rb foo
+    script/destroy-environment.rb foo
+    script/create-tables.rb
+    script/destroy-tables.rb
 
 TEST CREATION AND DESTRUCTION OF ENVS
 
     ruby -Ilib test/create_environment_test.rb
+
+CREATE A LOCAL TABLE
+
+    script/create-tables.rb --local
+    script/destroy-tables.rb --local
+
+RUN locally:
+
+    /usr/local/bin/dynamodb-local
+    DYNAMODB_ENDPOINT=http://localhost:8000 ruby lib/api.rb
+    open http://localhost:4567
 
 RUN remotely:
 
