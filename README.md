@@ -40,7 +40,7 @@ The tables will be defined in two environments:
  * local-dev (for interactive testing)
  * local-test (for automated testing)
 
-.
+Execute:
 
     script/create-local-tables.sh
     script/destroy-local-tables.sh
