@@ -15,10 +15,18 @@
     <script src="/js/jquery"></script>
     <script>
     $.ajax({
-      url: '/api/summary',
-      method: 'GET',
-      success: summary_success,
+      url: '/api/movements',
+      method: 'POST',
+      success: create_fake_movements_success,
     })
+
+    function create_fake_movements_success() {
+      $.ajax({
+        url: '/api/summary',
+        method: 'GET',
+        success: summary_success,
+      })
+    }
 
     function summary_success(data) {
       console.log(data)

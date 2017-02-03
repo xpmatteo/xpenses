@@ -14,7 +14,7 @@ get '/' do
 end
 
 get '/js/jquery' do
-  send_file 'public/js/jquery-1.10.2.js', type: :json
+  send_file 'public/js/jquery-1.10.2.js', type: 'application/javascript'
 end
 
 
