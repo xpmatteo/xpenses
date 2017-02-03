@@ -7,16 +7,13 @@ if ENV['DYNAMODB_ENDPOINT']
   Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
 end
 @env=ENV['XPENSES_ENV'] or raise "Please set env var XPENSES_ENV"
+
+set :public_folder, 'public'
 movements_table = "xpenses-movements-#{@env}"
 
 get '/' do
   send_file 'public/index.html', type: :html
 end
-
-get '/js/jquery' do
-  send_file 'public/js/jquery-1.10.2.js', type: 'application/javascript'
-end
-
 
 get '/api/summary' do
   content_type :json

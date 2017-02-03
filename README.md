@@ -32,20 +32,18 @@ TEST CREATION AND DESTRUCTION OF ENVS
 
     ruby -Ilib test/create_environment_test.rb
 
-CREATE A LOCAL SET OF TABLES
+RUN locally:
 
+    script/create-local-tables.sh
+
+This will (re-)create the local tables.
 The local tables are implemented in a local dynamodb, running on port 8000.
 The tables will be defined in two environments:
 
  * local-dev (for interactive testing)
  * local-test (for automated testing)
 
-Execute:
-
-    script/create-local-tables.sh
-    script/destroy-local-tables.sh
-
-RUN locally:
+Then
 
     /usr/local/bin/dynamodb-local
     script/server
