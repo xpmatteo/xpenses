@@ -18,13 +18,12 @@ module Infrastructure
     end
 
     puts "Creating instance #{name} in #{env}"
-    ec2 = Aws::EC2::Resource.new(region: $region)
     defaults = {
       min_count: 1,
       max_count: 1,
     }
 
-    instances = ec2.create_instances(defaults.merge(params))
+    instances = ec2_resource.create_instances(defaults.merge(params))
     instances.batch_create_tags(make_tags(name, env))
     instances.each { |i| i.wait_until_running }
     return instances.first
@@ -40,9 +39,7 @@ module Infrastructure
   end
 
   def find_instances name, env
-    ec2 = Aws::EC2::Resource.new(region: $region)
-
-    instances= ec2.instances({filters: [
+    instances= ec2_resource.instances({filters: [
       {name: 'tag:Name', values: [name]},
       {name: 'tag:Env', values: [env]},
     ]})
@@ -54,16 +51,13 @@ module Infrastructure
   end
 
   def find_all_instances env
-    ec2 = Aws::EC2::Resource.new(region: $region)
-    return ec2.instances({filters: [
+    ec2_resource.instances({filters: [
       {name: 'tag:Env', values: [env]},
     ]})
   end
 
   def find_security_group name, env
-    ec2 = Aws::EC2::Resource.new(region: $region)
-
-    groups = ec2.security_groups({filters: [
+    groups = ec2_resource.security_groups({filters: [
       {name: 'tag:Name', values: [name]},
       {name: 'tag:Env', values: [env]},
     ]})
@@ -85,9 +79,7 @@ module Infrastructure
   end
 
   def delete_security_groups env
-    ec2 = Aws::EC2::Resource.new(region: $region)
-
-    groups = ec2.security_groups({filters: [
+    groups = ec2_resource.security_groups({filters: [
       {name: 'tag:Env', values: [env]},
     ]})
     groups.each do |i|
@@ -102,8 +94,7 @@ module Infrastructure
       return sg
     end
     puts "Creating security group #{name} in #{env}"
-    ec2 = Aws::EC2::Resource.new(region: $region)
-    sg = ec2.create_security_group({
+    sg = ec2_resource.create_security_group({
       group_name: name,
       description: "SG for #{name} in #{env}",
     })
@@ -147,21 +138,14 @@ module Infrastructure
   end
 
   def find_role name
-    client = Aws::IAM::Client.new(region: $region)
-    iam = Aws::IAM::Resource.new(client: client)
-    iam.roles.find { |r| r.name == name }
+    iam_resource.roles.find { |r| r.name == name }
   end
 
   def find_instance_profile name
-    client = Aws::IAM::Client.new(region: $region)
-    iam = Aws::IAM::Resource.new(client: client)
-    iam.instance_profiles.find { |ip| ip.name == name }
+    iam_resource.instance_profiles.find { |ip| ip.name == name }
   end
 
   def create_instance_profile_with_policy name, policy
-    client = Aws::IAM::Client.new(region: $region)
-    iam = Aws::IAM::Resource.new(client: client)
-
     role = find_role(name)
     if role
       puts "Role #{name} already exists"
@@ -180,7 +164,7 @@ module Infrastructure
         }]
       }
 
-      role = iam.create_role({
+      role = iam_resource.create_role({
         role_name: name,
         assume_role_policy_document: policy_doc.to_json
       })
@@ -216,9 +200,7 @@ module Infrastructure
   end
 
   def delete_roles env
-    client = Aws::IAM::Client.new(region: $region)
-    iam = Aws::IAM::Resource.new(client: client)
-    iam.instance_profiles.each do |ip|
+    iam_resource.instance_profiles.each do |ip|
       name = ip.instance_profile_name
       if name.end_with? env
         puts "Detaching role #{name} from instance profile #{name}"
@@ -227,7 +209,7 @@ module Infrastructure
         client.delete_instance_profile({instance_profile_name: name})
       end
     end
-    iam.roles.each do |role|
+    iam_resource.roles.each do |role|
       name = role.name
       if name.end_with? env
         role.attached_policies.each do |policy|
@@ -286,6 +268,22 @@ module Infrastructure
     end
   end
 
+  def create_subnet name, env, vpc_id, cidr_block
+    puts "Creating subnet #{name} in #{env} cidr #{cidr_block}"
+    subnet = ec2_resource.create_subnet({
+      cidr_block: cidr_block,
+      vpc_id: vpc_id
+    })
+    subnet.create_tags(make_tags(name, env))
+    return subnet
+
+    def find_all_subnets env
+      ec2_resource.subnets({filters: [
+        {name: 'tag:Env', values: [env]},
+      ]})
+    end
+  end
+
   private
 
   def ec2_resource
@@ -294,6 +292,14 @@ module Infrastructure
 
   def ec2_client
     Aws::EC2::Client.new(region: $region)
+  end
+
+  def iam_client
+    Aws::IAM::Client.new(region: $region)
+  end
+
+  def iam_resource
+    Aws::IAM::Resource.new(client: iam_client)
   end
 
   def make_tags name, env

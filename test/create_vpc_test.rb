@@ -27,4 +27,18 @@ class CreateVpcTest < Minitest::Test
     destroy_vpc vpc.vpc_id
     assert_equal 0, find_all_vpcs(env).count, "after deletion"
   end
+
+
+  def test_create_subnet
+    env = "test-#{ENV['USER']}"
+    subnet_name = "mysubnet"
+
+    destroy_all_vpcs env
+
+    vpc = create_vpc "tmp", env, "10.0.0.0/16"
+    subnet = create_subnet subnet_name, env, vpc.vpc_id, "10.0.1.0/24"
+    assert_equal 1, find_all_subnets(env).count, "after creation"
+    assert subnet.subnet_id.start_with?("vpc-")
+
+  end
 end
