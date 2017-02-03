@@ -56,12 +56,7 @@ RUN remotely:
     script/deploy.sh <environment>
     open http://$(script/instance-ip <environment>)/
 
-RUN locally:
-
-    ruby lib/api.rb
-    open http://localhost:4567
-
-RUN UI TESTS
+RUN remote UI TESTS
 
     script/smoke-test.sh
 
