@@ -7,10 +7,12 @@ class Account
   end
 
   def movements year, month
-
-    (22...26).map do |i|
-      { amount: format_money(@movements.sheet('Sheet1').row(i)[3]) }
+    result = []
+    (21...26).each do |row|
+      amount = @movements.sheet('Sheet1').row(row)[3]
+      result << { amount: format_money(amount) } if amount
     end
+    result
   end
 
   private
