@@ -22,14 +22,13 @@ class Account
       date = @movements.sheet('Sheet1').row(row)[2]
       amount = @movements.sheet('Sheet1').row(row)[3]
       next unless amount
-      movement = { date: date.to_s, amount: format_money(amount), id: rand(1_000_000_000).to_s }
+      movement = { month: date.to_s, amount: format_money(amount), id: rand(1_000_000_000).to_s }
     	params = {
         table_name: MOVEMENTS_TABLE,
     		item: movement,
      	}
-    	result = dynamodb.put_item(params)
+    	dynamodb.put_item(params)
     end
-
   end
 
   def movements year, month

@@ -1,7 +1,7 @@
 
 
  - make month the id of the table
-
+ - make second part of key a hash of all values
  - upload xls file from UI
  - find end-of-file automatically
  - save to dynamodb

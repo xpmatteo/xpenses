@@ -6,12 +6,12 @@ require_relative 'lib/env-scripts-preamble'
 # use the convention [component]-[tablename]-[environment]
 table_name = "xpenses-movements-#{@env}"
 attribute_defs = [
-  { attribute_name: 'id',        attribute_type: 'S' },
-  { attribute_name: 'date',      attribute_type: 'S' },
+  { attribute_name: 'month',        attribute_type: 'S' },
+  { attribute_name: 'id',      attribute_type: 'S' },
 ]
 key_schema = [
-  { attribute_name: 'id', key_type: 'HASH' },
-  { attribute_name: 'date', key_type: 'RANGE' },
+  { attribute_name: 'month', key_type: 'HASH' },
+  { attribute_name: 'id', key_type: 'RANGE' },
 ]
 request = {
   attribute_definitions:    attribute_defs,
