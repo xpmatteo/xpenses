@@ -23,15 +23,26 @@ class Account
   end
 
   def load path
-    @movements = Roo::Spreadsheet.open(path)
-    sheet = @movements.sheet('Sheet1')
-    (21...26).each do |row|
-      date = sheet.row(row)[0]
-      amount = sheet.row(row)[3]
-      next unless amount
-      month = format_month(date.year, date.month)
-      movement = { month: month, amount: format_money(amount), id: rand(1_000_000_000).to_s }
-    	dynamodb.put_item table_name: MOVEMENTS_TABLE, item: movement
+    movements = Roo::Spreadsheet.open(path)
+    sheet = movements.sheet('Sheet1')
+    (21...26).each do |row_number|
+      load_row sheet.row(row_number)
+    end
+  end
+
+  def load_row row
+    movement = make_movement(row)
+    if movement
+      dynamodb.put_item table_name: MOVEMENTS_TABLE, item: movement
+    end
+  end
+
+  def make_movement row
+    date = row[0]
+    amount = row[3]
+    month = format_month(date.year, date.month)
+    if amount
+      { month: month, amount: format_money(amount), id: rand(1_000_000_000).to_s }
     end
   end
 
