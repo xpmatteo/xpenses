@@ -2,9 +2,8 @@
 
  - require the XPENSES_REGION env var
 
- - make second part of key a hash of all values
+ - avoid double-loading the same row
  - upload xls file from UI
- - find end-of-file automatically
 
 
  - destroy vpc when destroying env
