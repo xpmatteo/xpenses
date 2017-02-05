@@ -22,7 +22,7 @@ class Account
       date = @movements.sheet('Sheet1').row(row)[2]
       amount = @movements.sheet('Sheet1').row(row)[3]
       next unless amount
-      movement = { month: date.to_s, amount: format_money(amount), id: rand(1_000_000_000).to_s }
+      movement = { month: '2016-09', amount: format_money(amount), id: rand(1_000_000_000).to_s }
     	params = {
         table_name: MOVEMENTS_TABLE,
     		item: movement,
@@ -32,12 +32,26 @@ class Account
   end
 
   def movements year, month
-    result = []
-    (21...26).each do |row|
-      amount = @movements.sheet('Sheet1').row(row)[3]
-      result << { amount: format_money(amount) } if amount
-    end
-    result
+    # result = []
+    # (21...26).each do |row|
+    #   amount = @movements.sheet('Sheet1').row(row)[3]
+    #   result << { amount: format_money(amount) } if amount
+    # end
+    # result
+
+    dynamodb = Aws::DynamoDB::Client.new
+    params = {
+        table_name: MOVEMENTS_TABLE,
+        key_condition_expression: "#month = :m",
+        expression_attribute_names: {
+            "#month" => "month"
+        },
+        expression_attribute_values: {
+            ":m" => '2016-09'
+        }
+    }
+
+    dynamodb.query(params).items
   end
 
   private
@@ -57,7 +71,9 @@ class ImportIspTest < Minitest::Test
     account = Account.new
     account.load test_file
 
-    assert_equal %w(462.73 1.50 11.50 275.00), account.movements(2016, 9).map { |m| m[:amount] }
+    p account.movements(2016, 9)
+
+    assert_equal %w(462.73 1.50 11.50 275.00), account.movements(2016, 9).map { |m| m['amount'] }
   end
 
 end
