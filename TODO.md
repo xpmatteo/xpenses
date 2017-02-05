@@ -1,6 +1,7 @@
 
 
- - parse xls into dynamodb
+ - make month the id of the table
+
  - upload xls file from UI
  - find end-of-file automatically
  - save to dynamodb
