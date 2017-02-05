@@ -9,8 +9,14 @@ class Account
   def movements year, month
 
     (22...26).map do |i|
-      { amount: @movements.sheet('Sheet1').row(i)[3] }
+      { amount: format_money(@movements.sheet('Sheet1').row(i)[3]) }
     end
+  end
+
+  private
+
+  def format_money float
+    sprintf "%.2f", float
   end
 end
 
