@@ -1,16 +1,21 @@
 
+ENV['XPENSES_ENV'] = 'local-test'
+ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
+
+
 require 'roo-xls'
 require "aws-sdk-core"
 
 class Account
+
+  XPENSES_ENV = ENV['XPENSES_ENV'] or raise "Please set env var XPENSES_ENV"
+  MOVEMENTS_TABLE = "xpenses-movements-#{XPENSES_ENV}"
+  if ENV['DYNAMODB_ENDPOINT']
+    Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
+  end
+
   def load path
     @movements = Roo::Spreadsheet.open(path)
-    @env=ENV['XPENSES_ENV'] or raise "Please set env var XPENSES_ENV"
-    if ENV['DYNAMODB_ENDPOINT']
-      Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
-    end
-
-    movements_table = "xpenses-movements-#{@env}"
     dynamodb = Aws::DynamoDB::Client.new
 
     (21...26).each do |row|
@@ -19,7 +24,7 @@ class Account
       next unless amount
       movement = { date: date.to_s, amount: format_money(amount), id: rand(1_000_000_000).to_s }
     	params = {
-        table_name: movements_table,
+        table_name: MOVEMENTS_TABLE,
     		item: movement,
      	}
     	result = dynamodb.put_item(params)
@@ -48,8 +53,6 @@ require 'minitest/autorun'
 class ImportIspTest < Minitest::Test
 
   def test_import
-    ENV['XPENSES_ENV'] = 'local-test'
-    ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
     test_file = 'test-data/isp-movements-short.xls'
 
     account = Account.new
