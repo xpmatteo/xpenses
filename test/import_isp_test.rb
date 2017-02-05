@@ -14,9 +14,21 @@ class Account
     Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
   end
 
+  def clear
+    result = dynamodb.scan(table_name: MOVEMENTS_TABLE)
+    result.items.each do |item|
+      dynamodb.delete_item({
+          table_name: MOVEMENTS_TABLE,
+          key: {
+              month: item["month"],
+              id: item['id'],
+          },
+      })
+    end
+  end
+
   def load path
     @movements = Roo::Spreadsheet.open(path)
-    dynamodb = Aws::DynamoDB::Client.new
 
     (21...26).each do |row|
       date = @movements.sheet('Sheet1').row(row)[2]
@@ -32,14 +44,6 @@ class Account
   end
 
   def movements year, month
-    # result = []
-    # (21...26).each do |row|
-    #   amount = @movements.sheet('Sheet1').row(row)[3]
-    #   result << { amount: format_money(amount) } if amount
-    # end
-    # result
-
-    dynamodb = Aws::DynamoDB::Client.new
     params = {
         table_name: MOVEMENTS_TABLE,
         key_condition_expression: "#month = :m",
@@ -50,11 +54,14 @@ class Account
             ":m" => '2016-09'
         }
     }
-
-    dynamodb.query(params).items
+    dynamodb.query(params).items.sort{ |a, b| a['date'] <=> b['date']  }
   end
 
   private
+
+  def dynamodb
+    @dynamodb ||= Aws::DynamoDB::Client.new
+  end
 
   def format_money float
     sprintf "%.2f", float
@@ -69,9 +76,8 @@ class ImportIspTest < Minitest::Test
     test_file = 'test-data/isp-movements-short.xls'
 
     account = Account.new
+    account.clear
     account.load test_file
-
-    p account.movements(2016, 9)
 
     assert_equal %w(462.73 1.50 11.50 275.00), account.movements(2016, 9).map { |m| m['amount'] }
   end
