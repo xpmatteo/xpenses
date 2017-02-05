@@ -2,6 +2,9 @@
 
  - parse xls into dynamodb
  - upload xls file from UI
+ - find end-of-file automatically
+ - save to dynamodb
+ - filter by month
 
 
  - destroy vpc when destroying env
