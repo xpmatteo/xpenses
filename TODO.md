@@ -1,11 +1,10 @@
 
 
- - make month the id of the table
+ - require the XPENSES_REGION env var
+
  - make second part of key a hash of all values
  - upload xls file from UI
  - find end-of-file automatically
- - save to dynamodb
- - filter by month
 
 
  - destroy vpc when destroying env
