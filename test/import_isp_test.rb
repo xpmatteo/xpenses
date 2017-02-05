@@ -51,10 +51,10 @@ class Account
             "#month" => "month"
         },
         expression_attribute_values: {
-            ":m" => '2016-09'
+            ":m" => sprintf('%04d-%02d', year, month)
         }
     }
-    dynamodb.query(params).items.sort{ |a, b| a['date'] <=> b['date']  }
+    dynamodb.query(params).items
   end
 
   private
@@ -79,7 +79,7 @@ class ImportIspTest < Minitest::Test
     account.clear
     account.load test_file
 
-    assert_equal %w(462.73 1.50 11.50 275.00), account.movements(2016, 9).map { |m| m['amount'] }
+    assert_equal %w(462.73 1.50 11.50 275.00).sort, account.movements(2016, 9).map { |m| m['amount'] } .sort
   end
 
 end
