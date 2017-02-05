@@ -6,6 +6,8 @@ ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
 require 'roo-xls'
 require "aws-sdk-core"
 
+require 'pry'
+
 class Account
 
   XPENSES_ENV = ENV['XPENSES_ENV'] or raise "Please set env var XPENSES_ENV"
@@ -31,15 +33,12 @@ class Account
     @movements = Roo::Spreadsheet.open(path)
 
     (21...26).each do |row|
-      date = @movements.sheet('Sheet1').row(row)[2]
+      date = @movements.sheet('Sheet1').row(row)[0]
       amount = @movements.sheet('Sheet1').row(row)[3]
       next unless amount
-      movement = { month: '2016-09', amount: format_money(amount), id: rand(1_000_000_000).to_s }
-    	params = {
-        table_name: MOVEMENTS_TABLE,
-    		item: movement,
-     	}
-    	dynamodb.put_item(params)
+      month = format_month(date.year, date.month)
+      movement = { month: month, amount: format_money(amount), id: rand(1_000_000_000).to_s }
+    	dynamodb.put_item table_name: MOVEMENTS_TABLE, item: movement
     end
   end
 
@@ -51,7 +50,7 @@ class Account
             "#month" => "month"
         },
         expression_attribute_values: {
-            ":m" => sprintf('%04d-%02d', year, month)
+            ":m" => format_month(year, month)
         }
     }
     dynamodb.query(params).items
@@ -63,6 +62,10 @@ class Account
     @dynamodb ||= Aws::DynamoDB::Client.new
   end
 
+  def format_month year, month
+    sprintf('%04d-%02d', year, month)
+  end
+
   def format_money float
     sprintf "%.2f", float
   end
@@ -72,14 +75,20 @@ require 'minitest/autorun'
 
 class ImportIspTest < Minitest::Test
 
-  def test_import
+  def setup
     test_file = 'test-data/isp-movements-short.xls'
-
-    account = Account.new
-    account.clear
-    account.load test_file
-
-    assert_equal %w(462.73 1.50 11.50 275.00).sort, account.movements(2016, 9).map { |m| m['amount'] } .sort
+    @account = Account.new
+    @account.clear
+    @account.load test_file
   end
 
+  def test_september
+    september = @account.movements(2016, 9)
+    assert_equal %w(462.73 1.50 11.50 275.00).sort, september.map{ |m| m['amount'] }.sort
+  end
+
+  def test_no_movements
+    assert_equal [], @account.movements(2016, 8)
+    assert_equal [], @account.movements(2016, 10)
+  end
 end
