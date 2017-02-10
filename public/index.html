@@ -11,22 +11,20 @@
       <tr><th>Month</th><th>Total</th></tr>
     </table>
 
+    <form action="/api/movements" method="post" enctype="multipart/form-data">
+      <p><label for="file">Data file</label><input type="file" name="file" id="file"></p>
+      <p><input type="submit" value="Upload"> </p>
+    </form>
+
 <!--    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script> -->
     <script src="/js/jquery-1.10.2.js"></script>
     <script>
-    $.ajax({
-      url: '/api/movements',
-      method: 'POST',
-      success: create_fake_movements_success,
-    })
 
-    function create_fake_movements_success() {
-      $.ajax({
-        url: '/api/summary',
-        method: 'GET',
-        success: summary_success,
-      })
-    }
+    $.ajax({
+      url: '/api/summary',
+      method: 'GET',
+      success: summary_success,
+    })
 
     function summary_success(data) {
       console.log(data)

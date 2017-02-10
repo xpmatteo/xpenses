@@ -1,4 +1,10 @@
 
+ smoke test: with Selenium
+ integration test: with rack::test, bypass UI
+ unit test: unit test
+
+
+
 
  - require the XPENSES_REGION env var
 
