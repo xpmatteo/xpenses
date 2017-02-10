@@ -1,13 +1,18 @@
 require 'roo-xls'
 require "aws-sdk-core"
 
+def getenv variable_name
+  ENV[variable_name] or raise "Please set environment variable '#{variable_name}'"
+end
+Aws.config.update({ region: getenv('XPENSES_REGION') })
+if ENV['DYNAMODB_ENDPOINT']
+  Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
+end
+
 class Account
 
-  XPENSES_ENV = ENV['XPENSES_ENV'] or raise "Please set env var XPENSES_ENV"
+  XPENSES_ENV = getenv('XPENSES_ENV')
   MOVEMENTS_TABLE = "xpenses-movements-#{XPENSES_ENV}"
-  if ENV['DYNAMODB_ENDPOINT']
-    Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
-  end
 
   def clear
     result = dynamodb.scan(table_name: MOVEMENTS_TABLE)
@@ -65,4 +70,5 @@ class Account
   def format_money float
     sprintf "%.2f", float
   end
+
 end

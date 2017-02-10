@@ -1,11 +1,11 @@
 
-INSTALL
+# Install
 
 Create a new AWS account.  Create a key pair.  Add these lines to your .bash_profile:
 
     export AWS_ACCESS_KEY_ID=<your access key id>
     export AWS_SECRET_ACCESS_KEY=<your secret access key>
-    export AWS_DEFAULT_REGION=<your preferred region>
+    export XPENSES_REGION=<your preferred region>
     export XPENSES_KEY_PAIR_NAME=<name of the key pair you wish to use>
     export XPENSES_KEY_PAIR_PATH=<path to the key pair private key>
 
@@ -21,38 +21,49 @@ You will need `ruby` and `gem` installed.  Then execute
 
     bundle
 
-MANIPULATE ENVIRONMENTS
+# Environments
+
+"Infrastructure as code" means that you should be able to create a complete new environment with a single command, and destroy it with same ease.
 
     script/create-environment.rb <env name>
     script/destroy-environment.rb <env name>
+
+These will only do the part related to DynamoDB tables
+
     script/create-tables.rb <env name>
     script/destroy-tables.rb <env name>
 
-TEST CREATION AND DESTRUCTION OF ENVS
+You can test that the above scripts work correctly with:
 
     ruby -Ilib test/create_environment_test.rb
 
-RUN locally:
+We expect to iterate on the definition of the tables.  We will experiment locally with a local DynamoDB, and this script will destroy all local tables and create them again.
 
     script/create-local-tables.sh
 
-This will (re-)create the local tables.
 The local tables are implemented in a local dynamodb, running on port 8000.
 The tables will be defined in two environments:
 
  * local-dev (for interactive testing)
  * local-test (for automated testing)
 
-Then
 
-    /usr/local/bin/dynamodb-local
+# Running
+
+
+Locally:
+
+    /usr/local/bin/dynamodb-local   # if you installed it with Homebrew
     script/server
     open http://localhost:4567
 
-RUN remotely:
+Remotely:
 
     script/deploy.sh <environment>
     open http://$(script/instance-ip <environment>)/
+
+
+# Testing
 
 RUN remote UI TESTS
 
@@ -60,4 +71,11 @@ RUN remote UI TESTS
 
 RUN UNIT TESTS
 
-    TBD
+A single file:
+
+    clear; ruby -Ilib test/<name of test file>
+
+All test files:
+
+    rake
+

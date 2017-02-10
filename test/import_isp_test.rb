@@ -1,5 +1,6 @@
 require 'minitest/autorun'
 
+ENV['XPENSES_REGION'] = 'eu-central-1'
 ENV['XPENSES_ENV'] = 'local-test'
 ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
 
