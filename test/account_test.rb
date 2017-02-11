@@ -6,7 +6,7 @@ ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
 
 require 'account'
 
-class ImportIspTest < Minitest::Test
+class AccountTest < Minitest::Test
 
   def setup
     test_file = 'test-data/isp-movements-short.xls'
