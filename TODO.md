@@ -4,6 +4,9 @@
  unit test: unit test
 
 
+ summary of all months
+
+ sum 0.10 ten times
 
 
  - require the XPENSES_REGION env var

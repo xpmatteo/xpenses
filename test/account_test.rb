@@ -15,9 +15,13 @@ class AccountTest < Minitest::Test
     @account.load test_file
   end
 
-  def test_september
+  def test_movements
     september = @account.movements(2016, 9)
     assert_equal %w(462.73 1.50 11.50 275.00).sort, september.map{ |m| m['amount'] }.sort
+  end
+
+  def test_summary
+    assert_equal [{month: '2016-09', total: '750.73'}], @account.summary
   end
 
   def test_no_movements
