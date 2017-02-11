@@ -65,6 +65,10 @@ class Account
     dynamodb.query(params).items
   end
 
+  def movements
+    dynamodb.scan(table_name: MOVEMENTS_TABLE).items
+  end
+
   def summary
     total = movements_month(2016, 9).each.map{ |m| m['amount'].to_f }.reduce(:+).to_s
     [{month: '2016-09', total: total}]
