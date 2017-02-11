@@ -37,7 +37,7 @@ class Account
 
   def load path
     movements = Roo::Spreadsheet.open(path)
-    sheet = movements.sheet('Sheet1')
+    sheet = movements.sheet('Lista Movimenti')
     for row_number in (21...100_000)
       row = sheet.row(row_number)
       date = row[0]

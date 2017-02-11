@@ -1,3 +1,5 @@
 #!/bin/bash
 
-DYNAMODB_ENDPOINT=http://localhost:8000 XPENSES_ENV=local-dev exec ruby lib/api.rb
+cd "$(dirname "$0")"/..
+
+DYNAMODB_ENDPOINT=http://localhost:8000 XPENSES_ENV=local-dev exec ruby -Ilib lib/api.rb
