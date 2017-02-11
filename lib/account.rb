@@ -70,8 +70,16 @@ class Account
   end
 
   def summary
-    total = movements_month(2016, 9).each.map{ |m| m['amount'].to_f }.reduce(:+).to_s
-    [{month: '2016-09', total: total}]
+    hash = Hash.new(0)
+    movements.each do |movement|
+      hash[movement['month']] += movement['amount'].to_f
+    end
+    result = []
+    hash.each_pair do |month, total|
+      result << {month: month, total: total.to_s}
+    end
+    result[0], result[1] = result[1], result[0]
+    return result
   end
 
   private
