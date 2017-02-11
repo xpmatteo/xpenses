@@ -70,16 +70,11 @@ class Account
   end
 
   def summary
-    hash = Hash.new(0)
+    by_month = Hash.new(0)
     movements.each do |movement|
-      hash[movement['month']] += movement['amount'].to_f
+      by_month[movement['month']] += movement['amount'].to_f
     end
-    result = []
-    hash.sort.each_pair do |month, total|
-      result << {month: month, total: total.to_s}
-    end
-    result[0], result[1] = result[1], result[0]
-    return result
+    by_month.sort.map { |month, total| { month: month, total: total.to_s } }
   end
 
   private
