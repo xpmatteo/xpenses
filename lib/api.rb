@@ -13,7 +13,7 @@ end
 get '/api/summary' do
   content_type :json
 
-  Account.new.movements(2016, 9).to_json
+  Account.new.summary.to_json
 end
 
 post '/api/movements' do
@@ -24,6 +24,5 @@ post '/api/movements' do
     return 500
   end
 
-  # TODO fail if file is too big
   Account.new.load(tmpfile)
 end
