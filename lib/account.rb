@@ -66,6 +66,7 @@ class Account
   end
 
   def movements
+    p dynamodb.scan(table_name: MOVEMENTS_TABLE).items
     dynamodb.scan(table_name: MOVEMENTS_TABLE).items
   end
 
