@@ -1,5 +1,6 @@
 ENV['RACK_ENV'] = 'test'
 ENV['XPENSES_ENV'] = 'local-test'
+ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
 
 require 'api'
 require 'minitest/autorun'

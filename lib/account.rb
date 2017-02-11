@@ -8,6 +8,14 @@ Aws.config.update({ region: getenv('XPENSES_REGION') })
 if ENV['DYNAMODB_ENDPOINT']
   Aws.config.update({ endpoint: ENV['DYNAMODB_ENDPOINT'] })
 end
+if getenv('XPENSES_ENV').start_with?('local')
+  if !ENV['DYNAMODB_ENDPOINT']
+    raise "Local environment #{getenv('XPENSES_ENV')} needs env variable DYNAMODB_ENDPOINT"
+  end
+  if !system "curl -s #{ENV['DYNAMODB_ENDPOINT']} -o /dev/null"
+    raise "It seems local DynamoDB is not started"
+  end
+end
 
 class Account
 
