@@ -75,7 +75,7 @@ class Account
       hash[movement['month']] += movement['amount'].to_f
     end
     result = []
-    hash.each_pair do |month, total|
+    hash.sort.each_pair do |month, total|
       result << {month: month, total: total.to_s}
     end
     result[0], result[1] = result[1], result[0]
