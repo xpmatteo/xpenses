@@ -22,15 +22,19 @@ class AccountTest < Minitest::Test
 
   def test_movements
     movements = @account.movements
-    assert_equal %w(462.73 1.50 11.50 275.00).sort, movements.map{ |m| m['amount'] }.sort
+    assert_equal %w(462.73 1.50 11.50 275.00 123.45).sort, movements.map{ |m| m['amount'] }.sort
   end
 
   def test_summary
-    assert_equal [{month: '2016-09', total: '750.73'}], @account.summary
+    expected = [
+      {month: '2016-09', total: '750.73'},
+      {month: '2016-10', total: '123.45'},
+    ]
+    assert_equal expected, @account.summary
   end
 
   def test_no_movements
     assert_equal [], @account.movements_month(2016, 8)
-    assert_equal [], @account.movements_month(2016, 10)
+    assert_equal [], @account.movements_month(2016, 11)
   end
 end
