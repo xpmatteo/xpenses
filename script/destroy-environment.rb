@@ -13,4 +13,4 @@ delete_roles @env
 
 # delete tables last, so that we avoid the risk of instances
 # keeping a surviving role that points to a deleted table
-system "script/create-tables.rb #{@env}" or exit -1
+system "script/destroy-tables.rb #{@env}" or exit -1

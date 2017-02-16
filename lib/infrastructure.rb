@@ -204,9 +204,9 @@ module Infrastructure
       name = ip.instance_profile_name
       if name.end_with? env
         puts "Detaching role #{name} from instance profile #{name}"
-        client.remove_role_from_instance_profile({instance_profile_name: name, role_name: name})
+        iam_client.remove_role_from_instance_profile({instance_profile_name: name, role_name: name})
         puts "Deleting instance profile #{name}"
-        client.delete_instance_profile({instance_profile_name: name})
+        iam_client.delete_instance_profile({instance_profile_name: name})
       end
     end
     iam_resource.roles.each do |role|
@@ -218,7 +218,7 @@ module Infrastructure
         end
         begin
           puts "Removing inline policy from role #{name}"
-          client.delete_role_policy({
+          iam_client.delete_role_policy({
             role_name: name,
             policy_name: name,
           })
