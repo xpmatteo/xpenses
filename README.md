@@ -77,5 +77,5 @@ A single file:
 
 All test files:
 
-    rake
+    script/test
 

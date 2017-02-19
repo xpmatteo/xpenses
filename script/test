@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby -w
+
+project_root = File.dirname(__FILE__) + "/.."
+$:.push project_root
+$:.push project_root + "/lib"
+Dir.glob(project_root + "/test/*_test.rb").each do |file|
+  require file
+end
