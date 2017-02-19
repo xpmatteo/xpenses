@@ -25,4 +25,5 @@ post '/api/movements' do
   end
 
   Account.new.load(tmpfile)
+  redirect "/"
 end
