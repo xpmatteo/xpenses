@@ -7,12 +7,12 @@ ENV['DYNAMODB_ENDPOINT'] = 'http://localhost:8000/'
 require 'account'
 
 class AccountTest < Minitest::Test
+  TEST_FILE = 'test-data/isp-movements-short.xls'
 
   def setup
-    test_file = 'test-data/isp-movements-short.xls'
     @account = Account.new
     @account.clear
-    @account.load test_file
+    @account.load TEST_FILE
   end
 
   def test_movements_month
@@ -23,8 +23,7 @@ class AccountTest < Minitest::Test
   end
 
   def test_movements
-    movements = @account.movements
-    assert_equal ["10.00", "250.00", "6.40", "95.51"].sort, movements.map{ |m| m['amount'] }.sort
+    assert_equal ["10.00", "250.00", "6.40", "95.51"].sort, @account.movements.map{ |m| m['amount'] }.sort
   end
 
   def test_summary
@@ -39,4 +38,12 @@ class AccountTest < Minitest::Test
     assert_equal [], @account.movements_month(2016, 8)
     assert_equal [], @account.movements_month(2016, 11)
   end
+
+  def test_skip_duplicate_lines
+    @account.load TEST_FILE # again!
+    @account.load TEST_FILE # and again!
+
+    assert_equal ["10.00", "250.00", "6.40", "95.51"].sort, @account.movements.map{ |m| m['amount'] }.sort
+  end
+
 end
