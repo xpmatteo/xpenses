@@ -43,7 +43,7 @@ class Account
       date = row[0]
       amount = row[3]
       description = row[2]
-      break if date.nil?
+      break if date.nil? || date == ""
       next if amount.nil?
       month = format_month(date.year, date.month)
       movement = { month: month, amount: format_money(amount), id: rand(1_000_000_000).to_s, description: description }
@@ -74,7 +74,7 @@ class Account
     movements.each do |movement|
       by_month[movement['month']] += movement['amount'].to_f
     end
-    by_month.sort.map { |month, total| { month: month, total: total.to_s } }
+    by_month.sort.map { |month, total| { month: month, total: sprintf('%.2f', total) } }
   end
 
   private

@@ -24,7 +24,7 @@ class ImportIspIntegrationTest < Minitest::Test
     @session.post "/api/movements", "file" => Rack::Test::UploadedFile.new(TEST_FILE, "application/xcel")
     assert @session.last_response.ok?, "last response #{@session.last_response.status}"
 
-    expected = '[{"month":"2016-09","total":"750.73"},{"month":"2016-10","total":"123.45"}]'
+    expected = '[{"month":"2017-01","total":"266.40"},{"month":"2017-02","total":"95.51"}]'
     assert_equal expected, @session.get('/api/summary').body
   end
 

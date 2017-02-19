@@ -16,19 +16,21 @@ class AccountTest < Minitest::Test
   end
 
   def test_movements_month
-    september = @account.movements_month(2016, 9)
-    assert_equal %w(462.73 1.50 11.50 275.00).sort, september.map{ |m| m['amount'] }.sort
+    january = @account.movements_month(2017, 1)
+    assert_equal ["10.00", "250.00", "6.40"].sort, january.map{ |m| m['amount'] }.sort
+    february = @account.movements_month(2017, 2)
+    assert_equal ["95.51"], february.map{ |m| m['amount'] }
   end
 
   def test_movements
     movements = @account.movements
-    assert_equal %w(462.73 1.50 11.50 275.00 123.45).sort, movements.map{ |m| m['amount'] }.sort
+    assert_equal ["10.00", "250.00", "6.40", "95.51"].sort, movements.map{ |m| m['amount'] }.sort
   end
 
   def test_summary
     expected = [
-      {month: '2016-09', total: '750.73'},
-      {month: '2016-10', total: '123.45'},
+      {month: '2017-01', total: '266.40'},
+      {month: '2017-02', total: '95.51'},
     ]
     assert_equal expected, @account.summary
   end
